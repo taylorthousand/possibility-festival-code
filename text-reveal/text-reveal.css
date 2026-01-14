@@ -1,0 +1,30 @@
+/* ===========================================
+   TEXT REVEAL - Supporting Styles
+   =========================================== */
+
+/* Hide headings initially to prevent FOUC (Flash of Unstyled Content) */
+[data-split="heading"] {
+  visibility: hidden;
+}
+
+/* Keep headings visible in Webflow Designer and Editor */
+.wf-design-mode [data-split="heading"],
+.w-editor [data-split="heading"] {
+  visibility: visible !important;
+}
+
+/* ===========================================
+   OPTIONAL: Font Rendering Performance
+   ===========================================
+   Uncomment this block if experiencing jank/stutter with 20+
+   text reveal elements on a page. Trades visual quality
+   (kerning, subpixel rendering) for smoother animations.
+   =========================================== */
+/*
+[data-split="heading"] {
+  -webkit-text-rendering: optimizeSpeed;
+  text-rendering: optimizeSpeed;
+  -webkit-transform: translateZ(0);
+  font-kerning: none;
+}
+*/
