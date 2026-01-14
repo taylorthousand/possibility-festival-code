@@ -4,7 +4,8 @@
    ===========================================
 
    ATTRIBUTES:
-   - data-split="heading"         → marks element for text splitting (required)
+   - data-split="fast"            → triggers early (top 95%)
+   - data-split="slow"            → triggers late (top 60%)
    - data-split-reveal="words"    → split type: lines, words, or chars (default: words)
    - data-split-trigger="load"    → trigger type: scroll or load (default: scroll)
 
@@ -22,10 +23,19 @@ const splitConfig = {
   chars: { duration: 0.4, stagger: 0.01 }
 }
 
+// Trigger points for fast/slow variants
+const triggerConfig = {
+  fast: 'clamp(top 80%)',   // original speed
+  slow: 'clamp(top 60%)',
+}
+
 function initTextReveal() {
-  document.querySelectorAll('[data-split="heading"]').forEach(heading => {
+  document.querySelectorAll('[data-split="fast"], [data-split="slow"]').forEach(heading => {
     // Reset CSS visibility (prevents FOUC)
     gsap.set(heading, { autoAlpha: 1 })
+
+    // Get the speed variant (fast or slow)
+    const speed = heading.dataset.split
 
     // Find the split type (default: words)
     const type = heading.dataset.splitReveal || 'words'
@@ -68,7 +78,7 @@ function initTextReveal() {
             ...animationProps,
             scrollTrigger: {
               trigger: heading,
-              start: 'clamp(top 80%)',
+              start: triggerConfig[speed],
               once: true
             }
           });
