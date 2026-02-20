@@ -12,12 +12,12 @@
 // Configuration - adjust these to tune the effect
 const parallaxConfig = {
   out: {
-    yPercent: 30,        // how far down the section sinks
+    y: '18.75rem',       // how far down the section sinks (300px at 16px base)
     start: 'top top',
     end: 'bottom top',
   },
   rise: {
-    yPercent: -30,       // how far up the section rises (negative = up)
+    y: '-18.75rem',      // how far up the section rises (300px at 16px base)
     start: 'top top',
     end: 'bottom top',
   }
@@ -27,7 +27,7 @@ function initParallaxSections() {
   // Sections that sink down as you scroll past
   document.querySelectorAll('[data-parallax="out"]').forEach(section => {
     gsap.to(section, {
-      yPercent: parallaxConfig.out.yPercent,
+      y: parallaxConfig.out.y,
       ease: 'none',
       scrollTrigger: {
         trigger: section,
@@ -41,7 +41,7 @@ function initParallaxSections() {
   // Sections that rise up out of the way
   document.querySelectorAll('[data-parallax="rise"]').forEach(section => {
     gsap.to(section, {
-      yPercent: parallaxConfig.rise.yPercent,
+      y: parallaxConfig.rise.y,
       ease: 'none',
       scrollTrigger: {
         trigger: section,

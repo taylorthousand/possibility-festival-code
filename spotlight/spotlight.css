@@ -1,0 +1,35 @@
+/* ===========================================
+   SPOTLIGHT - CSS for fog overlay with radial cutout
+   =========================================== */
+
+.spotlight-overlay {
+  --spotlight-x: 65%;
+  --spotlight-y: 30%;
+  --spotlight-rx: 45%;
+  --spotlight-ry: 30%;
+  --spotlight-rotation: 0deg;
+
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  margin-bottom: -100vh;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.spotlight-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse var(--spotlight-rx) var(--spotlight-ry)
+      at var(--spotlight-x) var(--spotlight-y),
+    transparent 0%,
+    transparent 93%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
+  transform: rotate(var(--spotlight-rotation));
+}
