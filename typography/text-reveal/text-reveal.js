@@ -4,10 +4,11 @@
    ===========================================
 
    ATTRIBUTES:
-   - data-split="fast"            → triggers early (top 95%)
-   - data-split="slow"            → triggers late (top 60%)
+   - data-split="early"           → triggers early (top 80%)
+   - data-split="late"            → triggers late (top 60%)
    - data-split-reveal="words"    → split type: lines, words, or chars (default: words)
    - data-split-trigger="load"    → trigger type: scroll or load (default: scroll)
+   - data-split-slow               → doubles duration and stagger (for short headings)
 
    PERFORMANCE NOTE: If experiencing jank/performance issues with
    many text reveal elements (20+), consider adding font rendering
@@ -23,22 +24,23 @@ const splitConfig = {
   chars: { duration: 0.4, stagger: 0.01 }
 }
 
-// Trigger points for fast/slow variants
+// Trigger points for early/late variants
 const triggerConfig = {
-  fast: 'clamp(top 80%)',   // original speed
-  slow: 'clamp(top 60%)',
+  early: 'clamp(top 80%)',
+  late: 'clamp(top 60%)',
 }
 
 function initTextReveal() {
-  document.querySelectorAll('[data-split="fast"], [data-split="slow"]').forEach(heading => {
+  document.querySelectorAll('[data-split="early"], [data-split="late"]').forEach(heading => {
     // Reset CSS visibility (prevents FOUC)
     gsap.set(heading, { autoAlpha: 1 })
 
-    // Get the speed variant (fast or slow)
+    // Get the trigger variant (early or late)
     const speed = heading.dataset.split
 
     // Find the split type (default: words)
     const type = heading.dataset.splitReveal || 'words'
+    const slow = heading.hasAttribute('data-split-slow')
 
     // Find the trigger type (default: scroll)
     const trigger = heading.dataset.splitTrigger || 'scroll'
@@ -63,8 +65,8 @@ function initTextReveal() {
         // Base animation properties (shared by both trigger types)
         const animationProps = {
           yPercent: 110,
-          duration: config.duration,
-          stagger: config.stagger,
+          duration: slow ? config.duration * 2 : config.duration,
+          stagger: slow ? config.stagger * 2 : config.stagger,
           ease: 'expo.out'
         }
 

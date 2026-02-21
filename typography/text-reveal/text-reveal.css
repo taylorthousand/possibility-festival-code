@@ -3,23 +3,23 @@
    =========================================== */
 
 /* Hide headings initially to prevent FOUC (Flash of Unstyled Content) */
-[data-split="fast"],
-[data-split="slow"] {
+[data-split="early"],
+[data-split="late"] {
   visibility: hidden;
 }
 
 /* Prevent descenders and letter bottoms from being clipped by line mask */
-[data-split="fast"] .line,
-[data-split="slow"] .line {
-  padding-bottom: 0.1em;
-  margin-bottom: -0.1em;
+[data-split="early"] .line,
+[data-split="late"] .line {
+  padding-bottom: 0.2em;
+  margin-bottom: -0.2em;
 }
 
 /* Keep headings visible in Webflow Designer and Editor */
-.wf-design-mode [data-split="fast"],
-.wf-design-mode [data-split="slow"],
-.w-editor [data-split="fast"],
-.w-editor [data-split="slow"] {
+.wf-design-mode [data-split="early"],
+.wf-design-mode [data-split="late"],
+.w-editor [data-split="early"],
+.w-editor [data-split="late"] {
   visibility: visible !important;
 }
 
@@ -31,8 +31,8 @@
    (kerning, subpixel rendering) for smoother animations.
    =========================================== */
 /*
-[data-split="fast"],
-[data-split="slow"] {
+[data-split="early"],
+[data-split="late"] {
   -webkit-text-rendering: optimizeSpeed;
   text-rendering: optimizeSpeed;
   -webkit-transform: translateZ(0);
