@@ -1,0 +1,45 @@
+/* ===========================================
+   FESTIVALS LIST HOVER - Dim siblings on hover
+   ===========================================
+
+   On list hover: dim all headings and hide
+   register tag backgrounds. On item hover:
+   restore heading, go italic, show blue tag.
+
+   Structure:
+   festivals_list
+     └─ festivals_item
+          └─ festivals_item-link
+               ├─ heading-style-h4-56.is-festivals
+               └─ festivals_register-tag
+
+   Only active on desktop (992px+).
+   =========================================== */
+
+@media only screen and (min-width: 992px) {
+
+  /* Base transitions */
+  .heading-style-h4-56.is-festivals {
+    transition: color 0.3s ease, font-variation-settings 0.3s ease;
+  }
+
+  .festivals_register-tag {
+    transition: background-color 0.3s ease;
+  }
+
+  /* --- List hovered: dim everything --- */
+  .festivals_list:hover .heading-style-h4-56.is-festivals {
+    color: #c4c4c4;
+  }
+
+  /* --- Hovered item: restore + enhance --- */
+  .festivals_list:hover .festivals_item-link:hover .heading-style-h4-56.is-festivals {
+    color: #000000;
+    font-variation-settings: 'slnt' -12;
+  }
+
+  .festivals_list:hover .festivals_item-link:hover .festivals_register-tag {
+    background-color: #2D9EEA;
+  }
+
+}

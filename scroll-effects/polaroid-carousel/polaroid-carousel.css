@@ -1,0 +1,22 @@
+/* ===========================================
+   POLAROID CAROUSEL - Base styles
+   ===========================================
+
+   Set in Webflow:
+   - .section_carousel: relative, 100vw x 100vh,
+     overflow hidden, flex center/center
+   - .carousel-center: relative, z-index 1,
+     text-align center
+   - .carousel-item: absolute positioning,
+     polaroid border/shadow styling
+
+   This CSS handles transform setup only.
+   =========================================== */
+
+.polaroid.vertical.is-carousel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform, opacity;
+  transform-origin: center center;
+}
