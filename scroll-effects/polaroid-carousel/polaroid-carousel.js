@@ -21,11 +21,10 @@
 
    SCROLL BEHAVIOR:
    - Section pins on scroll
-   - Carousel starts spinning immediately
-   - Polaroids fly in one by one from the left, catching
-     their orbit position as they arrive
-   - All 7 are in by the end of the first revolution
-   - Continues for 0.5 more revolutions, then unpins
+   - Cards start in orbit, spinning begins immediately
+   - Carousel rotates ~2 revolutions
+   - Near the end, cards peel off one by one at 12 o'clock
+     and fly out to the right
 
    Desktop only (992px+).
    =========================================== */
@@ -38,6 +37,7 @@
     // Orbit radii (vw units for responsive sizing)
     radiusX: 38,            // horizontal spread
     radiusY: 14,            // vertical spread (subtle ellipse)
+    orbitOffsetY: 0,        // vertical offset of entire orbit (rem units, negative = up)
 
     // Depth mapping (fake Z — used for scale/opacity/brightness)
     scaleMin: 0.8,
@@ -51,22 +51,29 @@
     maxLean: 12,            // max degrees of casual lean
 
     // Scroll
-    scrollMultiplier: 3,     // pin duration as multiple of viewport height
+    scrollMultiplier: 4,     // pin duration as multiple of viewport height
     scrub: 1,               // scrub smoothing (seconds)
 
     // Rotation
-    revolutions: 1.5,
+    revolutions: 2,
 
-    // Entry: polaroids fly in one by one from the left
-    // Stagger is auto-calculated for even orbit spacing
-    entryDuration: 0.10,    // how long each polaroid takes to fly in (fraction of total progress)
-    entryStartOffset: 0.02, // small delay before first polaroid enters
-    entryStartLean: -20,    // lean angle as polaroid enters (tilted, then settles)
+    // Exit: cards peel off one by one at 12 o'clock, fly out right
+    // Auto-stagger is calculated from orbit spacing (same as old entry)
+    exitDuration: 0.10,     // how long each card takes to fly out
+    exitLean: 20,           // lean angle as card exits (tilts toward right)
+
+    // Spin ramp: ease into rotation speed over this fraction of scroll progress
+    spinRampDuration: 0.12, // first ~12% of scroll eases in, then constant speed
+
+    // Idle waver: subtle floating rotation before scroll begins
+    waverAmplitude: 6,      // degrees of gentle wobble
+    waverSpeed: 0.167,      // oscillation speed (Hz) — ~6 sec cycle
+    waverBlendDuration: 0.06, // scroll progress over which waver fades out
   };
 
   const TOTAL = 7;
   const TWO_PI = Math.PI * 2;
-  const BACK_ANGLE = -Math.PI / 2;   // 12 o'clock = back of orbit (farthest from viewer)
+  const BACK_ANGLE = -Math.PI / 2;   // 12 o'clock = back of orbit
 
   /* ---------- HELPERS ---------- */
 
@@ -89,96 +96,137 @@
     return Math.sin(angle * 1.5 + offset) * config.maxLean;
   }
 
-  // Get the carousel angle at a given progress (full progress = all revolutions)
+  // Eased spin: quadratic ramp-up over spinRampDuration, then constant speed.
+  // Continuous position AND velocity at the transition point.
+  var spinRamp = config.spinRampDuration;
+  var spinScale = 1 / (1 - spinRamp / 2);
+
+  function easedSpinProgress(p) {
+    var ep;
+    if (p < spinRamp) {
+      ep = p * p / (2 * spinRamp);
+    } else {
+      ep = p - spinRamp / 2;
+    }
+    return ep * spinScale;
+  }
+
   function carouselAngle(progress) {
-    return progress * config.revolutions * TWO_PI;
+    return easedSpinProgress(progress) * config.revolutions * TWO_PI;
+  }
+
+  // Inverse: given a target angle, find the scroll progress that produces it
+  function inverseCarouselProgress(angle) {
+    var ep = angle / (config.revolutions * TWO_PI * spinScale);
+    if (ep < spinRamp / 2) {
+      return Math.sqrt(2 * spinRamp * ep);
+    }
+    return ep + spinRamp / 2;
   }
 
   // Orbit position in px at a given angle
   function orbitPxX(angle) { return orbitX(angle) * (window.innerWidth / 100); }
   function orbitPxY(angle) { return orbitY(angle) * (window.innerWidth / 100); }
 
-  // Entry ease — soft overshoot for that magical float feel
-  var entryEase = gsap.parseEase('power3.out');
+  // Exit ease — slow detach from orbit, then accelerate off-screen
+  var exitEase = gsap.parseEase('power3.in');
+
+  // Idle waver — time-based floating wobble
+  var waverTime = 0;
+
+  function waverRotation(i) {
+    var phase = (i / TOTAL) * TWO_PI;
+    return config.waverAmplitude * Math.sin(TWO_PI * config.waverSpeed * waverTime + phase);
+  }
+
+  /* ---------- EXIT TIMING ---------- */
+
+  // Calculate each card's exit start progress.
+  // Mirror of the old entry: auto-stagger = 1 / (TOTAL * revolutions)
+  // Last card exits at (1.0 - exitDuration), earlier cards stagger before it.
+  function calcExitStart(i) {
+    // Each card exits when it naturally reaches 12 o'clock (BACK_ANGLE).
+    // Uses inverseCarouselProgress to account for the spin ease-in.
+    var best = -1;
+    for (var k = 1; k <= Math.ceil(config.revolutions) + 1; k++) {
+      var targetAngle = (k - i / TOTAL) * TWO_PI;
+      var p = inverseCarouselProgress(targetAngle);
+      if (p >= 0 && p < 1.0) {
+        best = p;
+      }
+    }
+    return best >= 0 ? best : 1.0 - config.exitDuration;
+  }
 
   /* ---------- UPDATE ---------- */
 
   function updateCarousel(progress, polaroids, originX, originY) {
-    // The carousel spins across the full progress range
     var spin = carouselAngle(progress);
 
     polaroids.forEach(function (el, i) {
-      // Entry timing: each polaroid arrives at the back, evenly staggered
-      // The auto-stagger = 1 / (TOTAL * revolutions) ensures even orbit spacing
-      var autoStagger = 1 / (TOTAL * config.revolutions);
-      var enterEnd = config.entryStartOffset + config.entryDuration + (i * autoStagger);
-      var enterStart = enterEnd - config.entryDuration;
+      // Even orbit spacing
+      var baseAngle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
 
-      // baseAngle set so that at enterEnd, this polaroid is at BACK_ANGLE
-      // After that, carousel spin carries it forward. Even spacing is guaranteed
-      // because the stagger matches the orbit's angular spacing.
-      var baseAngle = BACK_ANGLE - carouselAngle(enterEnd);
+      // Exit timing for this card
+      var exitStart = calcExitStart(i);
+      var exitEnd = exitStart + config.exitDuration;
 
-      if (progress < enterStart) {
-        /* --- Not yet entered: hidden off-screen left --- */
-        gsap.set(el, {
-          x: -window.innerWidth * 0.4,
-          y: originY,
-          scale: 0.8,
-          opacity: 0,
-          rotation: config.entryStartLean,
-          filter: 'brightness(1)',
-          zIndex: 0,
-        });
-
-      } else if (progress < enterEnd) {
-        /* --- Flying in: targets moving orbit position for smooth handoff --- */
-        var t = (progress - enterStart) / config.entryDuration;
-        var eased = entryEase(t);
-
-        // Target the actual orbit position (moves with the carousel)
-        // At enterEnd, baseAngle + spin = BACK_ANGLE, so it arrives at the back
-        // But during entry it tracks the slight motion, building momentum
+      if (progress < exitStart) {
+        /* --- Orbiting: follow the carousel --- */
         var angle = baseAngle + spin;
         var d = depth(angle);
-        var targetX = originX + orbitPxX(angle);
-        var targetY = originY + orbitPxY(angle);
-        var targetScale = map(d, -1, 1, config.scaleMin, config.scaleMax);
-        var targetBrightness = map(d, -1, 1, config.brightnessMin, config.brightnessMax);
-        var targetLean = lean(angle, i);
 
-        // Entry start position: off-screen left, vertically near origin
-        var startX = -window.innerWidth * 0.4;
-        var startY = originY;
+        // Blend idle waver out over early scroll progress
+        var waverBlend = gsap.utils.clamp(0, 1, 1 - progress / config.waverBlendDuration);
 
         gsap.set(el, {
-          x: gsap.utils.interpolate(startX, targetX, eased),
-          y: gsap.utils.interpolate(startY, targetY, eased),
-          scale: gsap.utils.interpolate(0.8, targetScale, eased),
-          opacity: gsap.utils.interpolate(0, 1, Math.min(eased * 2, 1)),
-          rotation: gsap.utils.interpolate(config.entryStartLean, targetLean, eased),
-          filter: 'brightness(' + gsap.utils.interpolate(1, targetBrightness, eased) + ')',
+          x: originX + orbitPxX(angle),
+          y: originY + orbitPxY(angle),
+          scale: map(d, -1, 1, config.scaleMin, config.scaleMax),
+          opacity: 1,
+          rotation: gsap.utils.interpolate(waverRotation(i), lean(angle, i), 1 - waverBlend),
+          filter: 'brightness(' + map(d, -1, 1, config.brightnessMin, config.brightnessMax) + ')',
+          zIndex: Math.round((d + 1) * 500),
+        });
+
+      } else if (progress < exitEnd) {
+        /* --- Flying out: peel off to the right --- */
+        var t = (progress - exitStart) / config.exitDuration;
+        var eased = exitEase(t);
+
+        // Live orbit position: card keeps following the carousel, gradually peels away
+        var angle = baseAngle + spin;
+        var d = depth(angle);
+        var fromX = originX + orbitPxX(angle);
+        var fromY = originY + orbitPxY(angle);
+        var fromScale = map(d, -1, 1, config.scaleMin, config.scaleMax);
+        var fromBrightness = map(d, -1, 1, config.brightnessMin, config.brightnessMax);
+        var fromLean = lean(angle, i);
+
+        // Target: off-screen right (full viewport width)
+        var toX = window.innerWidth * 1.2;
+        var toY = originY;
+
+        gsap.set(el, {
+          x: gsap.utils.interpolate(fromX, toX, eased),
+          y: gsap.utils.interpolate(fromY, toY, eased),
+          scale: gsap.utils.interpolate(fromScale, 1, eased),
+          opacity: 1,
+          rotation: gsap.utils.interpolate(fromLean, config.exitLean, eased),
+          filter: 'brightness(' + gsap.utils.interpolate(fromBrightness, 1, eased) + ')',
           zIndex: Math.round((d + 1) * 500),
         });
 
       } else {
-        /* --- In orbit: follow the carousel --- */
-        var angle = baseAngle + spin;
-        var d = depth(angle);
-
-        var x = originX + orbitPxX(angle);
-        var y = originY + orbitPxY(angle);
-        var s = map(d, -1, 1, config.scaleMin, config.scaleMax);
-        var b = map(d, -1, 1, config.brightnessMin, config.brightnessMax);
-
+        /* --- Gone: off-screen right --- */
         gsap.set(el, {
-          x: x,
-          y: y,
-          scale: s,
+          x: window.innerWidth * 1.2,
+          y: originY,
+          scale: 1,
           opacity: 1,
-          rotation: lean(angle, i),
-          filter: 'brightness(' + b + ')',
-          zIndex: Math.round((d + 1) * 500),
+          rotation: config.exitLean,
+          filter: 'brightness(1)',
+          zIndex: 0,
         });
       }
     });
@@ -206,16 +254,61 @@
     var originX = (centerRect.left + centerRect.width / 2) - sectionRect.left - (polRect.width / 2);
     var originY = (centerRect.top + centerRect.height / 2) - sectionRect.top - (polRect.height / 2);
 
-    // Initial state: hidden off-screen left
-    polaroids.forEach(function (el) {
+    // Apply vertical offset (rem → px)
+    var remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    originY += config.orbitOffsetY * remPx;
+
+    // Pre-calculate center's fixed viewport position (stable during pin, avoids runtime jitter)
+    var centerFixedTop = centerRect.top - sectionRect.top;
+    var centerFixedLeft = centerRect.left;
+    var centerFixedWidth = centerRect.width;
+
+    // Initial state: cards in their orbit positions at progress 0
+    polaroids.forEach(function (el, i) {
+      var angle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+      var d = depth(angle);
+
       gsap.set(el, {
-        x: -window.innerWidth * 0.4,
-        y: originY,
-        opacity: 0,
-        scale: 0.8,
-        rotation: config.entryStartLean,
+        x: originX + orbitPxX(angle),
+        y: originY + orbitPxY(angle),
+        scale: map(d, -1, 1, config.scaleMin, config.scaleMax),
+        opacity: 1,
+        rotation: lean(angle, i),
+        filter: 'brightness(' + map(d, -1, 1, config.brightnessMin, config.brightnessMax) + ')',
+        zIndex: Math.round((d + 1) * 500),
       });
     });
+
+    // Pre-compute exit timing to find if any exits overflow past progress 1.0
+    var maxExitEnd = 0;
+    for (var i = 0; i < TOTAL; i++) {
+      maxExitEnd = Math.max(maxExitEnd, calcExitStart(i) + config.exitDuration);
+    }
+    var progressScale = Math.max(1, maxExitEnd);
+
+    // Progress bar
+    var progressBar = document.createElement('div');
+    progressBar.style.cssText = 'position:absolute;bottom:0;left:0;width:0%;height:0.375rem;background:#FFCC00;z-index:2000;';
+    section.appendChild(progressBar);
+
+    // Idle waver ticker — runs continuously to advance time,
+    // applies wobble rotation directly when scroll is inactive
+    var scrollActive = false;
+    var centerPlaceholder = null;
+    var centerPinScrollY = 0;
+    var centerFadeActive = false;
+    var centerFadeDist = window.innerHeight; // fade over full viewport (matches section scroll-off)
+
+    var idleTickerFn = function () {
+      waverTime += gsap.ticker.deltaRatio() / 60;
+      if (!scrollActive) {
+        polaroids.forEach(function (el, i) {
+          var angle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+          gsap.set(el, { rotation: waverRotation(i) });
+        });
+      }
+    };
+    gsap.ticker.add(idleTickerFn);
 
     // Pin + scrub
     ScrollTrigger.create({
@@ -224,9 +317,49 @@
       start: 'top top',
       end: '+=' + (window.innerHeight * config.scrollMultiplier),
       scrub: config.scrub,
+      onEnter: function () { scrollActive = true; },
+      onLeaveBack: function () { scrollActive = false; },
       onUpdate: function (self) {
-        updateCarousel(self.progress, polaroids, originX, originY);
+        updateCarousel(self.progress * progressScale, polaroids, originX, originY);
+        progressBar.style.width = (self.progress * 100) + '%';
       },
+      onLeave: function () {
+        // Pin carousel-center: reparent to body so position:fixed works
+        // (ScrollTrigger's transform on the section breaks fixed positioning)
+        if (!center) return;
+        centerPlaceholder = document.createComment('carousel-center-placeholder');
+        center.parentNode.insertBefore(centerPlaceholder, center);
+        document.body.appendChild(center);
+        gsap.set(center, {
+          position: 'fixed',
+          top: centerFixedTop,
+          left: centerFixedLeft,
+          width: centerFixedWidth,
+          margin: 0,
+          zIndex: 1,
+          opacity: 1,
+        });
+        // Record scroll position at pin release for fade calculation
+        centerPinScrollY = window.scrollY;
+        centerFadeActive = true;
+      },
+      onEnterBack: function () {
+        // Restore carousel-center back into the section
+        if (!center || !centerPlaceholder) return;
+        centerFadeActive = false;
+        gsap.set(center, { clearProps: 'position,top,left,width,margin,zIndex,opacity' });
+        centerPlaceholder.parentNode.insertBefore(center, centerPlaceholder);
+        centerPlaceholder.parentNode.removeChild(centerPlaceholder);
+        centerPlaceholder = null;
+      },
+    });
+
+    // Fade carousel-center after it's pinned to body (works in both scroll directions)
+    window.addEventListener('scroll', function () {
+      if (!centerFadeActive || !center) return;
+      var dist = window.scrollY - centerPinScrollY;
+      var opacity = gsap.utils.clamp(0.5, 1, 1 - dist / centerFadeDist);
+      center.style.opacity = opacity;
     });
 
     // Refresh on resize (debounced)
