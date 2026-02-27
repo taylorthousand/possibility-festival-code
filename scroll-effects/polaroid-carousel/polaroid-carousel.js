@@ -36,15 +36,15 @@
   const config = {
     // Orbit radii (vw units for responsive sizing)
     radiusX: 38,            // horizontal spread
-    radiusY: 14,            // vertical spread (subtle ellipse)
-    orbitOffsetY: 0,        // vertical offset of entire orbit (rem units, negative = up)
+    radiusY: 16,            // vertical spread (subtle ellipse)
+    orbitOffsetY: 2,        // vertical offset of entire orbit (rem units, negative = up)
 
     // Depth mapping (fake Z — used for scale/opacity/brightness)
     scaleMin: 0.8,
     scaleMax: 1.1,
     opacityMin: 1,
     opacityMax: 1.0,
-    brightnessMin: 0.7,
+    brightnessMin: 0.75,
     brightnessMax: 1.0,
 
     // Lean (Z-axis rotation that shifts as cards orbit)
