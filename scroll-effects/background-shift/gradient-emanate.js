@@ -6,8 +6,8 @@ const emanateConfig = {
   stop1End: 0,
   stop2End: 0,
   blackStartEnd: 0,   // black edge collapses from 100% to 0%
-  start: 'bottom 95%',
-  end: 'bottom 70%',
+  start: 'center 16%',
+  end: 'bottom top',
 };
 
 function initGradientEmanate() {

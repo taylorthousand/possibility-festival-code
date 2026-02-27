@@ -3,7 +3,17 @@
     "allow": [
       "Bash(find:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebSearch",
+      "WebFetch(domain:gsap.com)",
+      "Bash(git -C /Users/taylornims/webflow-code/possibility-festival status)",
+      "Bash(git -C /Users/taylornims/webflow-code/possibility-festival diff)",
+      "Bash(git -C /Users/taylornims/webflow-code/possibility-festival log --oneline -5)",
+      "WebFetch(domain:developers.webflow.com)",
+      "mcp__claude_ai_Webflow__data_sites_tool"
     ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
   }
 }

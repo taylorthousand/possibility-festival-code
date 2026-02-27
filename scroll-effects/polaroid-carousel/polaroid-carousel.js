@@ -258,11 +258,6 @@
     var remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
     originY += config.orbitOffsetY * remPx;
 
-    // Pre-calculate center's fixed viewport position (stable during pin, avoids runtime jitter)
-    var centerFixedTop = centerRect.top - sectionRect.top;
-    var centerFixedLeft = centerRect.left;
-    var centerFixedWidth = centerRect.width;
-
     // Initial state: cards in their orbit positions at progress 0
     polaroids.forEach(function (el, i) {
       var angle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
@@ -294,10 +289,6 @@
     // Idle waver ticker — runs continuously to advance time,
     // applies wobble rotation directly when scroll is inactive
     var scrollActive = false;
-    var centerPlaceholder = null;
-    var centerPinScrollY = 0;
-    var centerFadeActive = false;
-    var centerFadeDist = window.innerHeight; // fade over full viewport (matches section scroll-off)
 
     var idleTickerFn = function () {
       waverTime += gsap.ticker.deltaRatio() / 60;
@@ -323,43 +314,6 @@
         updateCarousel(self.progress * progressScale, polaroids, originX, originY);
         progressBar.style.width = (self.progress * 100) + '%';
       },
-      onLeave: function () {
-        // Pin carousel-center: reparent to body so position:fixed works
-        // (ScrollTrigger's transform on the section breaks fixed positioning)
-        if (!center) return;
-        centerPlaceholder = document.createComment('carousel-center-placeholder');
-        center.parentNode.insertBefore(centerPlaceholder, center);
-        document.body.appendChild(center);
-        gsap.set(center, {
-          position: 'fixed',
-          top: centerFixedTop,
-          left: centerFixedLeft,
-          width: centerFixedWidth,
-          margin: 0,
-          zIndex: 1,
-          opacity: 1,
-        });
-        // Record scroll position at pin release for fade calculation
-        centerPinScrollY = window.scrollY;
-        centerFadeActive = true;
-      },
-      onEnterBack: function () {
-        // Restore carousel-center back into the section
-        if (!center || !centerPlaceholder) return;
-        centerFadeActive = false;
-        gsap.set(center, { clearProps: 'position,top,left,width,margin,zIndex,opacity' });
-        centerPlaceholder.parentNode.insertBefore(center, centerPlaceholder);
-        centerPlaceholder.parentNode.removeChild(centerPlaceholder);
-        centerPlaceholder = null;
-      },
-    });
-
-    // Fade carousel-center after it's pinned to body (works in both scroll directions)
-    window.addEventListener('scroll', function () {
-      if (!centerFadeActive || !center) return;
-      var dist = window.scrollY - centerPinScrollY;
-      var opacity = gsap.utils.clamp(0.5, 1, 1 - dist / centerFadeDist);
-      center.style.opacity = opacity;
     });
 
     // Refresh on resize (debounced)

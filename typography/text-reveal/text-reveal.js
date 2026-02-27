@@ -30,8 +30,64 @@ const triggerConfig = {
   late: 'clamp(top 60%)',
 }
 
+// Preserve inline spans with data attributes before SplitText destroys them
+function preserveSpans(heading) {
+  const spans = heading.querySelectorAll('span[data-hangtag]')
+  if (!spans.length) return []
+
+  const preserved = []
+  spans.forEach(span => {
+    preserved.push({
+      text: span.textContent.trim(),
+      className: span.className,
+      hangtag: span.getAttribute('data-hangtag'),
+      style: span.getAttribute('style') || ''
+    })
+  })
+  return preserved
+}
+
+// Re-inject preserved spans by walking text nodes after split
+function restoreSpans(heading, preserved) {
+  if (!preserved.length) return
+
+  preserved.forEach(item => {
+    const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT)
+    let node
+    while (node = walker.nextNode()) {
+      const idx = node.textContent.indexOf(item.text)
+      if (idx === -1) continue
+
+      // Split the text node around the match
+      const before = node.textContent.substring(0, idx)
+      const after = node.textContent.substring(idx + item.text.length)
+
+      // Build the span
+      const span = document.createElement('span')
+      if (item.className) span.className = item.className
+      span.setAttribute('data-hangtag', item.hangtag)
+      if (item.style) span.setAttribute('style', item.style)
+      span.textContent = item.text
+
+      // Replace the text node with before + span + after
+      const parent = node.parentNode
+      if (after) parent.insertBefore(document.createTextNode(after), node.nextSibling)
+      parent.insertBefore(span, node.nextSibling)
+      if (before) {
+        node.textContent = before
+      } else {
+        parent.removeChild(node)
+      }
+      break // found it, move to next preserved item
+    }
+  })
+}
+
 function initTextReveal() {
   document.querySelectorAll('[data-split="early"], [data-split="late"]').forEach(heading => {
+    // Preserve marked spans before SplitText destroys them
+    const preserved = preserveSpans(heading)
+
     // Reset CSS visibility (prevents FOUC)
     gsap.set(heading, { autoAlpha: 1 })
 
@@ -59,6 +115,9 @@ function initTextReveal() {
       wordsClass: 'word',
       charsClass: 'letter',
       onSplit: function(instance) {
+        // Restore preserved spans after split
+        restoreSpans(heading, preserved)
+
         const targets = instance[type]
         const config = splitConfig[type]
 

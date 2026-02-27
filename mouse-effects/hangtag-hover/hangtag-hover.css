@@ -1,0 +1,11 @@
+/* ===========================================
+   HANGTAG HOVER - Possibility Festival
+   =========================================== */
+
+/* Hide hang tags by default (JS reveals on hover) */
+/* position: fixed removes from document flow; visibility/opacity hide visually */
+.problem_study-hangtag {
+  position: fixed;
+  visibility: hidden;
+  opacity: 0;
+}

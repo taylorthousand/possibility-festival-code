@@ -1,7 +1,7 @@
 .section_solution {
-  --stop1: 50%;
-  --stop2: 70%;
-  --black-start: 100%;
+  --stop1: 45%;
+  --stop2: 65%;
+  --black-start: 94%;
   background: radial-gradient(
     circle at 50% 10%,
     #2394E0 var(--stop1),

@@ -1,0 +1,8 @@
+/* ===========================================
+   NAV BLEND - Possibility Festival
+   =========================================== */
+
+/* Invert colors behind the logo */
+.nav_logo {
+  mix-blend-mode: difference;
+}
