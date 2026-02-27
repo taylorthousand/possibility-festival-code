@@ -51,11 +51,11 @@
     maxLean: 12,            // max degrees of casual lean
 
     // Scroll
-    scrollMultiplier: 4,     // pin duration as multiple of viewport height
+    scrollMultiplier: 2.5,     // pin duration as multiple of viewport height
     scrub: 1,               // scrub smoothing (seconds)
 
     // Rotation
-    revolutions: 2,
+    revolutions: 1.75,
 
     // Exit: cards peel off one by one at 12 o'clock, fly out right
     // Auto-stagger is calculated from orbit spacing (same as old entry)
