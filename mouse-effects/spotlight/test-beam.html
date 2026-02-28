@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotlight Beam Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f5f0e6;
+    font-family: system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Simulated page section */
+  .section {
+    position: relative;
+    width: 100vw;
+    height: 200vh;
+  }
+
+  /* Fake content to simulate the target area */
+  .fake-target {
+    position: sticky;
+    top: 50%;
+    left: 70%;
+    transform: translate(-50%, -50%);
+    width: 280px;
+    height: 380px;
+    background: white;
+    border: 12px solid white;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 10;
+  }
+  .fake-target img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: linear-gradient(135deg, #8B7355 0%, #A0522D 50%, #6B4226 100%);
+  }
+
+  /* --- SPOTLIGHT OVERLAY --- */
+  .spotlight-overlay {
+    --spotlight-x: 70%;
+    --spotlight-y: 50%;
+    --spotlight-rx: 28%;
+    --spotlight-ry: 40%;
+
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    margin-bottom: -100vh;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  /* Fog layer */
+  .spotlight-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse var(--spotlight-rx) var(--spotlight-ry)
+        at var(--spotlight-x) var(--spotlight-y),
+      transparent 0%,
+      transparent 82%,
+      rgba(0, 0, 0, 0.20) 88%,
+      rgba(0, 0, 0, 0.24) 92%,
+      rgba(0, 0, 0, 0.24) 100%
+    );
+  }
+
+  /* Warm center glow */
+  .spotlight-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse var(--spotlight-rx) var(--spotlight-ry)
+        at var(--spotlight-x) var(--spotlight-y),
+      rgba(255, 238, 200, 0.06) 0%,
+      rgba(255, 238, 200, 0.03) 40%,
+      transparent 70%
+    );
+  }
+
+  /* Beam */
+  .spotlight-beam {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Debug: tangent lines */
+  .debug-line {
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 0;
+    border-top: 1px dashed rgba(255,0,0,0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+    z-index: 9998;
+  }
+  /* Debug: touch points */
+  .debug-dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    background: red;
+    border-radius: 50%;
+    transform: translate(-5px, -5px);
+    pointer-events: none;
+    z-index: 9998;
+    display: none;
+  }
+  /* Debug: ellipse outline */
+  .debug-ellipse {
+    position: absolute;
+    border: 1px dashed rgba(0,255,0,0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    display: none;
+  }
+
+  /* --- CONTROLS --- */
+  .controls {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 9999;
+    background: rgba(0,0,0,0.85);
+    color: #eee;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    width: 280px;
+    max-height: 90vh;
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+  .controls h3 {
+    margin: 12px 0 6px;
+    color: #ffcc00;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .controls h3:first-child { margin-top: 0; }
+  .controls label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px 0;
+  }
+  .controls input[type="range"] {
+    width: 140px;
+  }
+  .controls .val {
+    width: 36px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .controls .toggle {
+    margin: 8px 0;
+  }
+  .controls .info {
+    color: #999;
+    font-size: 10px;
+    margin: 4px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="section" data-spotlight>
+  <div class="spotlight-overlay"></div>
+  <div class="fake-target" data-spotlight-target>
+    <img>
+  </div>
+</div>
+
+<!-- Dark background overlay -->
+<div id="darkBg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:15;pointer-events:none;"></div>
+
+<!-- Debug tangent lines -->
+<div class="debug-line" id="debugLine1"></div>
+<div class="debug-line" id="debugLine2"></div>
+<!-- Debug touch points and ellipse -->
+<div class="debug-dot" id="debugDot1"></div>
+<div class="debug-dot" id="debugDot2"></div>
+<div class="debug-dot" id="debugDotSrc" style="background:blue;"></div>
+<div class="debug-ellipse" id="debugEllipse"></div>
+
+<div class="controls">
+  <h3>Beam Origin</h3>
+  <label>Origin X <input type="range" id="originX" min="0" max="100" value="100" step="1"><span class="val" id="originX-val">100</span>%</label>
+  <label>Origin Y <input type="range" id="originY" min="0" max="100" value="37" step="1"><span class="val" id="originY-val">37</span>%</label>
+
+  <label>Ellipse Edge <input type="range" id="ellipseEdge" min="0.5" max="1" value="0.85" step="0.01"><span class="val" id="ellipseEdge-val">0.85</span></label>
+  <label>Origin Width <input type="range" id="originWidth" min="0" max="60" value="37" step="1"><span class="val" id="originWidth-val">37</span>%</label>
+
+  <h3>Outer Cone</h3>
+  <label>Soft Edge <input type="range" id="softEdge" min="0.001" max="2" value="0.025" step="0.001"><span class="val" id="softEdge-val">0.025</span></label>
+  <label>Opacity <input type="range" id="beamOpacity" min="0" max="1" value="1" step="0.05"><span class="val" id="beamOpacity-val">1</span></label>
+  <label>Blur (px) <input type="range" id="beamBlur" min="0" max="80" value="4" step="1"><span class="val" id="beamBlur-val">4</span></label>
+  <label>Color Intensity <input type="range" id="colorIntensity" min="0.02" max="1" value="0.5" step="0.02"><span class="val" id="colorIntensity-val">0.5</span></label>
+
+  <h3>Inner Column</h3>
+  <label>Width Ratio <input type="range" id="innerWidth" min="0" max="1" value="0.5" step="0.05"><span class="val" id="innerWidth-val">0.5</span></label>
+  <label>Intensity <input type="range" id="innerIntensity" min="0" max="1" value="0.8" step="0.02"><span class="val" id="innerIntensity-val">0.8</span></label>
+  <label>Soft Edge <input type="range" id="innerSoftEdge" min="0.001" max="2" value="0.325" step="0.001"><span class="val" id="innerSoftEdge-val">0.325</span></label>
+  <label>Blur (px) <input type="range" id="innerBlur" min="0" max="80" value="10" step="1"><span class="val" id="innerBlur-val">10</span></label>
+
+  <h3>Beam Color</h3>
+  <label class="toggle"><input type="radio" name="beamColor" value="white"> Pure white</label>
+  <label class="toggle"><input type="radio" name="beamColor" value="soft" checked> Soft warm</label>
+  <label class="toggle"><input type="radio" name="beamColor" value="warm"> Warm amber</label>
+
+  <h3>Mask (Length Fade)</h3>
+  <label>Fade Start <input type="range" id="maskStart" min="0" max="100" value="0" step="1"><span class="val" id="maskStart-val">0</span>%</label>
+  <label>Fade End <input type="range" id="maskEnd" min="10" max="100" value="21" step="1"><span class="val" id="maskEnd-val">21</span>%</label>
+
+  <h3>Layers</h3>
+  <label class="toggle"><input type="checkbox" id="toggleFog" checked> Fog (::before)</label>
+  <label class="toggle"><input type="checkbox" id="toggleGlow" checked> Warm glow (::after)</label>
+  <label class="toggle"><input type="checkbox" id="toggleBeam" checked> Outer cone</label>
+  <label class="toggle"><input type="checkbox" id="toggleInner" checked> Inner column</label>
+  <label class="toggle"><input type="checkbox" id="toggleDark"> Dark background</label>
+  <label class="toggle"><input type="checkbox" id="toggleDebug"> Show tangent lines (debug)</label>
+
+  <button id="celebrateBtn" style="width:100%;padding:8px;margin-top:12px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);border:none;border-radius:6px;cursor:pointer;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.3);">Celebrate</button>
+
+  <h3>Computed</h3>
+  <div class="info" id="infoHalf">Half-angle: --</div>
+  <div class="info" id="infoTouch">Touch points: --</div>
+</div>
+
+<script>
+(function() {
+  var overlay = document.querySelector('.spotlight-overlay');
+  var target = document.querySelector('[data-spotlight-target]');
+  var beam = document.createElement('div');
+  beam.classList.add('spotlight-beam');
+  overlay.appendChild(beam);
+
+  var beamInner = document.createElement('div');
+  beamInner.classList.add('spotlight-beam');
+  overlay.appendChild(beamInner);
+
+  var debugLine1 = document.getElementById('debugLine1');
+  var debugLine2 = document.getElementById('debugLine2');
+  var debugDot1 = document.getElementById('debugDot1');
+  var debugDot2 = document.getElementById('debugDot2');
+  var debugDotSrc = document.getElementById('debugDotSrc');
+  var debugEllipse = document.getElementById('debugEllipse');
+
+  // Ellipse radii (must match CSS custom properties)
+  var RX = 28; // --spotlight-rx in %
+  var RY = 40; // --spotlight-ry in %
+
+  // Spotlight position
+  var spotX = 75;
+  var spotY = 50;
+
+  function updateSpotFromTarget() {
+    if (!target) return;
+    var rect = target.getBoundingClientRect();
+    spotX = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
+    spotY = ((rect.top + rect.height / 2) / window.innerHeight) * 100;
+    overlay.style.setProperty('--spotlight-x', spotX + '%');
+    overlay.style.setProperty('--spotlight-y', spotY + '%');
+  }
+
+  function val(id) {
+    return parseFloat(document.getElementById(id).value);
+  }
+
+  function updateAllDisplays() {
+    document.querySelectorAll('input[type="range"]').forEach(function(el) {
+      var display = document.getElementById(el.id + '-val');
+      if (display) display.textContent = el.value;
+    });
+  }
+
+  function getBeamColor() {
+    return document.querySelector('input[name="beamColor"]:checked').value;
+  }
+
+  /* ---- Tangent-to-ellipse beam computation ---- */
+  function computeBeam(srcX, srcY) {
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+
+    // Visible edge factor (fog starts before the full ellipse radius)
+    var edgeFactor = val('ellipseEdge');
+
+    // Convert to pixels, scaled by visible edge
+    var srcPxX = srcX / 100 * vw;
+    var srcPxY = srcY / 100 * vh;
+    var ctrPxX = spotX / 100 * vw;
+    var ctrPxY = spotY / 100 * vh;
+    var aPx = RX * edgeFactor / 100 * vw;  // effective horizontal semi-axis
+    var bPx = RY * edgeFactor / 100 * vh;  // effective vertical semi-axis
+
+    // Source in normalized ellipse space (transforms ellipse to unit circle)
+    var normSrcX = (srcPxX - ctrPxX) / aPx;
+    var normSrcY = (srcPxY - ctrPxY) / bPx;
+    var normDist = Math.sqrt(normSrcX * normSrcX + normSrcY * normSrcY);
+
+    if (normDist <= 1.01) return null; // source inside ellipse
+
+    // Angle from center to source in normalized space
+    var normAlpha = Math.atan2(normSrcY, normSrcX);
+
+    // Half-angle of tangent cone in normalized space
+    var normBeta = Math.acos(1 / normDist);
+
+    // Tangent touch point angles (on unit circle, from center)
+    var touchAngle1 = normAlpha + normBeta;
+    var touchAngle2 = normAlpha - normBeta;
+
+    // Touch points in pixel space (transform back from unit circle to ellipse)
+    var t1px = { x: ctrPxX + aPx * Math.cos(touchAngle1), y: ctrPxY + bPx * Math.sin(touchAngle1) };
+    var t2px = { x: ctrPxX + aPx * Math.cos(touchAngle2), y: ctrPxY + bPx * Math.sin(touchAngle2) };
+
+    // Angles from SOURCE to each tangent point (in pixel/screen space)
+    var ang1 = Math.atan2(t1px.y - srcPxY, t1px.x - srcPxX);
+    var ang2 = Math.atan2(t2px.y - srcPxY, t2px.x - srcPxX);
+
+    // Center angle from source to ellipse center
+    var centerAng = Math.atan2(ctrPxY - srcPxY, ctrPxX - srcPxX);
+
+    // CSS conic convention: 0deg = up, clockwise. Convert from math (0 = right, CCW positive).
+    var cssAng1 = ang1 * (180 / Math.PI) + 90;
+    var cssAng2 = ang2 * (180 / Math.PI) + 90;
+    var cssCenterAngle = centerAng * (180 / Math.PI) + 90;
+
+    // Offsets from center (signed, in degrees)
+    var offset1 = cssAng1 - cssCenterAngle;
+    var offset2 = cssAng2 - cssCenterAngle;
+    // Normalize to [-180, 180]
+    while (offset1 > 180) offset1 -= 360;
+    while (offset1 < -180) offset1 += 360;
+    while (offset2 > 180) offset2 -= 360;
+    while (offset2 < -180) offset2 += 360;
+
+    // negOffset = the tangent on the "earlier" (counter-clockwise) side
+    // posOffset = the tangent on the "later" (clockwise) side
+    var negOffset = Math.min(offset1, offset2);
+    var posOffset = Math.max(offset1, offset2);
+
+    return {
+      negOffset: negOffset,      // degrees from center to one tangent (negative)
+      posOffset: posOffset,      // degrees from center to other tangent (positive)
+      cssCenterAngle: cssCenterAngle,
+      mathCenterAngleDeg: centerAng * (180 / Math.PI),
+      // For debug lines and clip-path
+      touch1: t1px,
+      touch2: t2px,
+      srcPx: { x: srcPxX, y: srcPxY },
+      // Ellipse info for SVG arc
+      aPx: aPx,
+      bPx: bPx,
+      // Which tangent touch point is "negative offset" vs "positive offset"
+      // so we can draw the arc in the correct direction
+      negTouch: offset1 < offset2 ? t1px : t2px,
+      posTouch: offset1 < offset2 ? t2px : t1px
+    };
+  }
+
+  function render() {
+    updateSpotFromTarget();
+
+    var srcX = val('originX');
+    var srcY = val('originY');
+    var softMult = val('softEdge');
+    var intensity = val('colorIntensity');
+    var maskStart = val('maskStart');
+    var maskEnd = val('maskEnd');
+
+    // Origin Width: push the conic-gradient center behind the visible origin
+    // along the beam axis. This widens the cone at the origin end without
+    // affecting where it wraps the ellipse at the target end.
+    var originWidth = val('originWidth'); // % of viewport to push back
+
+    // Direction from source to spotlight center (in viewport %)
+    var dirX = spotX - srcX;
+    var dirY = spotY - srcY;
+    var dirLen = Math.sqrt(dirX * dirX + dirY * dirY);
+    if (dirLen < 0.1) return;
+    var ndx = dirX / dirLen;
+    var ndy = dirY / dirLen;
+
+    // Pushed-back virtual source (behind the visible origin)
+    var virtualSrcX = srcX - ndx * originWidth;
+    var virtualSrcY = srcY - ndy * originWidth;
+
+    // Compute tangents from the virtual source
+    var result = computeBeam(virtualSrcX, virtualSrcY);
+    if (!result) return;
+
+    // Asymmetric tangent offsets from center (in degrees)
+    var negOff = result.negOffset;
+    var posOff = result.posOffset;
+    var beamSpan = posOff - negOff; // total angular width between tangent lines
+
+    // Soft edge scales with total beam width
+    var softEdge = beamSpan * softMult * 0.5;
+
+    // Color
+    var beamColor = getBeamColor();
+    var r = 255;
+    var g = beamColor === 'warm' ? 238 : beamColor === 'soft' ? 248 : 255;
+    var b = beamColor === 'warm' ? 200 : beamColor === 'soft' ? 230 : 255;
+    var peakIntensity = intensity;
+    var edgeIntensity = intensity * 0.7;
+
+    // Gradient construction: the outer transparent edges land exactly on the tangent lines.
+    // Soft edge eats inward.
+    // The conic-gradient center is at the virtual (pushed-back) source,
+    // but the mask still starts at the real origin.
+    var fromAngle = result.cssCenterAngle + negOff - softEdge;
+
+    // Offsets relative to fromAngle:
+    var stopEdge1 = softEdge;                          // tangent line (neg side)
+    var stopPeak  = softEdge + (-negOff);              // center of beam
+    var stopEdge2 = softEdge + beamSpan;               // tangent line (pos side)
+    var stopEnd   = softEdge + beamSpan + softEdge;    // end of soft transition
+
+    beam.style.background =
+      'conic-gradient(' +
+        'from ' + fromAngle + 'deg at ' + virtualSrcX + '% ' + virtualSrcY + '%, ' +
+        'transparent 0deg, ' +
+        'rgba(' + r + ',' + g + ',' + b + ',' + edgeIntensity + ') ' + stopEdge1 + 'deg, ' +
+        'rgba(' + r + ',' + g + ',' + b + ',' + peakIntensity + ') ' + stopPeak + 'deg, ' +
+        'rgba(' + r + ',' + g + ',' + b + ',' + edgeIntensity + ') ' + stopEdge2 + 'deg, ' +
+        'transparent ' + stopEnd + 'deg, ' +
+        'transparent 360deg' +
+      ')';
+
+    // Mask: gradient fade along beam length
+    beam.style.clipPath = 'none';
+    var maskAngle = 90 + result.mathCenterAngleDeg;
+    var maskGradient = 'linear-gradient(' + maskAngle + 'deg, white 0%, white ' + maskStart + '%, transparent ' + maskEnd + '%)';
+    beam.style.maskImage = maskGradient;
+    beam.style.webkitMaskImage = maskGradient;
+
+    // Appearance
+    beam.style.opacity = val('beamOpacity');
+    beam.style.filter = 'blur(' + val('beamBlur') + 'px)';
+
+    // Layer toggles
+    beam.style.display = document.getElementById('toggleBeam').checked ? 'block' : 'none';
+
+    // --- Inner column: narrower, brighter cone centered within the outer ---
+    var innerWidthRatio = val('innerWidth');
+    var innerIntensity = val('innerIntensity');
+    var innerSoftMult = val('innerSoftEdge');
+
+    // Narrow the span: shrink both offsets toward center by the width ratio
+    var innerNegOff = negOff * innerWidthRatio;
+    var innerPosOff = posOff * innerWidthRatio;
+    var innerSpan = innerPosOff - innerNegOff;
+    var innerSoftEdge = innerSpan * innerSoftMult * 0.5;
+
+    var innerEdgeIntensity = innerIntensity * 0.7;
+
+    var innerFromAngle = result.cssCenterAngle + innerNegOff - innerSoftEdge;
+    var innerStopEdge1 = innerSoftEdge;
+    var innerStopPeak  = innerSoftEdge + (-innerNegOff);
+    var innerStopEdge2 = innerSoftEdge + innerSpan;
+    var innerStopEnd   = innerSoftEdge + innerSpan + innerSoftEdge;
+
+    beamInner.style.background =
+      'conic-gradient(' +
+        'from ' + innerFromAngle + 'deg at ' + virtualSrcX + '% ' + virtualSrcY + '%, ' +
+        'transparent 0deg, ' +
+        'rgba(' + r + ',' + g + ',' + b + ',' + innerEdgeIntensity + ') ' + innerStopEdge1 + 'deg, ' +
+        'rgba(' + r + ',' + g + ',' + b + ',' + innerIntensity + ') ' + innerStopPeak + 'deg, ' +
+        'rgba(' + r + ',' + g + ',' + b + ',' + innerEdgeIntensity + ') ' + innerStopEdge2 + 'deg, ' +
+        'transparent ' + innerStopEnd + 'deg, ' +
+        'transparent 360deg' +
+      ')';
+
+    beamInner.style.clipPath = 'none';
+    beamInner.style.maskImage = maskGradient;
+    beamInner.style.webkitMaskImage = maskGradient;
+    beamInner.style.opacity = val('beamOpacity');
+    beamInner.style.filter = 'blur(' + val('innerBlur') + 'px)';
+    beamInner.style.display = document.getElementById('toggleInner').checked ? 'block' : 'none';
+
+    // Debug tangent lines, touch points, ellipse outline
+    var showDebug = document.getElementById('toggleDebug').checked;
+    debugLine1.style.display = showDebug ? 'block' : 'none';
+    debugLine2.style.display = showDebug ? 'block' : 'none';
+    debugDot1.style.display = showDebug ? 'block' : 'none';
+    debugDot2.style.display = showDebug ? 'block' : 'none';
+    debugDotSrc.style.display = showDebug ? 'block' : 'none';
+    debugEllipse.style.display = showDebug ? 'block' : 'none';
+    if (showDebug) {
+      drawDebugLine(debugLine1, result.srcPx, result.touch1);
+      drawDebugLine(debugLine2, result.srcPx, result.touch2);
+
+      // Touch points (red dots where tangent lines meet the ellipse)
+      debugDot1.style.left = result.touch1.x + 'px';
+      debugDot1.style.top = result.touch1.y + 'px';
+      debugDot2.style.left = result.touch2.x + 'px';
+      debugDot2.style.top = result.touch2.y + 'px';
+
+      // Source point (blue dot)
+      debugDotSrc.style.left = result.srcPx.x + 'px';
+      debugDotSrc.style.top = result.srcPx.y + 'px';
+
+      // Effective ellipse outline (green dashed) — this is the ellipse the tangents target
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var edgeFactor = val('ellipseEdge');
+      var eW = RX * edgeFactor / 100 * vw * 2; // full width in px
+      var eH = RY * edgeFactor / 100 * vh * 2; // full height in px
+      var eCX = spotX / 100 * vw;
+      var eCY = spotY / 100 * vh;
+      debugEllipse.style.width = eW + 'px';
+      debugEllipse.style.height = eH + 'px';
+      debugEllipse.style.left = (eCX - eW / 2) + 'px';
+      debugEllipse.style.top = (eCY - eH / 2) + 'px';
+    }
+
+    // Info
+    document.getElementById('infoHalf').textContent = 'Offsets: ' + negOff.toFixed(1) + '\u00B0 / +' + posOff.toFixed(1) + '\u00B0 (span: ' + beamSpan.toFixed(1) + '\u00B0)';
+    document.getElementById('infoTouch').textContent = 'Touch points: (' +
+      (result.touch1.x / window.innerWidth * 100).toFixed(1) + '%, ' +
+      (result.touch1.y / window.innerHeight * 100).toFixed(1) + '%) & (' +
+      (result.touch2.x / window.innerWidth * 100).toFixed(1) + '%, ' +
+      (result.touch2.y / window.innerHeight * 100).toFixed(1) + '%)';
+
+    updateAllDisplays();
+  }
+
+  function drawDebugLine(el, from, to) {
+    var dx = to.x - from.x;
+    var dy = to.y - from.y;
+    var len = Math.sqrt(dx * dx + dy * dy);
+    var angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    el.style.left = from.x + 'px';
+    el.style.top = from.y + 'px';
+    el.style.width = len + 'px';
+    el.style.transform = 'rotate(' + angle + 'deg)';
+  }
+
+  // Toggle fog/glow via CSS override
+  var styleEl = document.createElement('style');
+  document.head.appendChild(styleEl);
+  function updateLayerStyles() {
+    var fogOff = !document.getElementById('toggleFog').checked;
+    var glowOff = !document.getElementById('toggleGlow').checked;
+    styleEl.textContent =
+      (fogOff ? '.spotlight-overlay::before { display: none !important; }' : '') +
+      (glowOff ? '.spotlight-overlay::after { display: none !important; }' : '');
+    document.getElementById('darkBg').style.display =
+      document.getElementById('toggleDark').checked ? 'block' : 'none';
+  }
+
+  // Bind controls
+  document.querySelectorAll('input').forEach(function(el) {
+    el.addEventListener('input', function() { render(); updateLayerStyles(); });
+  });
+
+  // Scroll + resize tracking
+  window.addEventListener('scroll', render);
+  window.addEventListener('resize', render);
+
+  // Confetti
+  document.getElementById('celebrateBtn').addEventListener('click', function() {
+    for (var i = 0; i < 120; i++) {
+      var c = document.createElement('div');
+      var size = Math.random() * 8 + 4;
+      var colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#fff'];
+      c.style.cssText = 'position:fixed;z-index:99999;pointer-events:none;border-radius:' +
+        (Math.random() > 0.5 ? '50%' : '1px') + ';width:' + size + 'px;height:' + size +
+        'px;background:' + colors[Math.floor(Math.random()*colors.length)] +
+        ';left:' + (Math.random()*100) + 'vw;top:-10px;opacity:1;';
+      document.body.appendChild(c);
+      var xDrift = (Math.random() - 0.5) * 200;
+      var dur = Math.random() * 2000 + 1500;
+      var spin = Math.random() * 720 - 360;
+      c.animate([
+        { transform: 'translateY(0) translateX(0) rotate(0deg)', opacity: 1 },
+        { transform: 'translateY(' + (window.innerHeight + 40) + 'px) translateX(' + xDrift + 'px) rotate(' + spin + 'deg)', opacity: 0.6 }
+      ], { duration: dur, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }).onfinish = function() { c.remove(); };
+    }
+  });
+
+  // Init
+  updateLayerStyles();
+  render();
+})();
+</script>
+</body>
+</html>
