@@ -24,7 +24,6 @@
     damping: 0.04,
     easeDuration: 0.5,
     fadeInDuration: 0.6,
-    scrollStart: '10% top',
     baseX: 50,
     baseY: 50,
   };
@@ -83,18 +82,7 @@
         isHov = false;
       });
 
-      gsap.fromTo(overlay, { opacity: 0 }, {
-        opacity: 1,
-        duration: donateSpotCfg.fadeInDuration,
-        ease: 'power2.out',
-        paused: true,
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 80%',
-          end: 'bottom 20%',
-          toggleActions: 'play reverse play reverse'
-        }
-      });
+      gsap.to(overlay, { opacity: 1, duration: donateSpotCfg.fadeInDuration, ease: 'power2.out' });
     });
   }
 

@@ -60,7 +60,6 @@ function initBeforeEnterFunctions(next) {
 }
 
 function initAfterEnterFunctions(next) {
-  console.log('[DEBUG] initAfterEnter called, next:', next);
   nextPage = next || document;
 
   // Pin-creating ScrollTriggers first (pin-spacers must exist before other triggers measure)
@@ -74,9 +73,7 @@ function initAfterEnterFunctions(next) {
   if (has('.section_hero')) initHeroScroll();
   if (has('[data-momentum-hover-init]')) initMomentumHover();
   if (has('[data-spotlight]')) initSpotlight();
-  console.log('[DEBUG] about to check donate spotlight, has:', has('[data-spotlight-donate]'));
   if (has('[data-spotlight-donate]')) initDonationSpotlight();
-  console.log('[DEBUG] donate spotlight done');
   if (has('[data-festival]')) initFestivalHover();
   if (has('.bg-shift-overlay')) initBackgroundShift();
   if (has('.section_solution')) initGradientEmanate();
@@ -793,7 +790,7 @@ function initSpotlight() {
 
 // CONTAINER: DONATION SPOTLIGHT
 
-var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, scrollStart: '10% top', baseX: 50, baseY: 50 };
+var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, baseX: 50, baseY: 50 };
 
 function initDonationSpotlight() {
   nextPage.querySelectorAll('[data-spotlight-donate]').forEach(function(section) {
@@ -826,9 +823,7 @@ function initDonationSpotlight() {
       frX=(lmX-baseX)*donateSpotCfg.damping; frY=(lmY-baseY)*donateSpotCfg.damping; isHov=false;
     });
 
-    gsap.fromTo(overlay,{opacity:0},{opacity:1,duration:donateSpotCfg.fadeInDuration,ease:'power2.out',paused:true,
-      scrollTrigger:{trigger:section,start:'top 80%',end:'bottom 20%',toggleActions:'play reverse play reverse'}
-    });
+    gsap.to(overlay,{opacity:1,duration:donateSpotCfg.fadeInDuration,ease:'power2.out'});
   });
 }
 
