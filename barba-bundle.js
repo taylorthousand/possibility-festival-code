@@ -60,6 +60,7 @@ function initBeforeEnterFunctions(next) {
 }
 
 function initAfterEnterFunctions(next) {
+  console.log('[DEBUG] initAfterEnter called, next:', next);
   nextPage = next || document;
 
   // Pin-creating ScrollTriggers first (pin-spacers must exist before other triggers measure)
@@ -73,7 +74,9 @@ function initAfterEnterFunctions(next) {
   if (has('.section_hero')) initHeroScroll();
   if (has('[data-momentum-hover-init]')) initMomentumHover();
   if (has('[data-spotlight]')) initSpotlight();
+  console.log('[DEBUG] about to check donate spotlight, has:', has('[data-spotlight-donate]'));
   if (has('[data-spotlight-donate]')) initDonationSpotlight();
+  console.log('[DEBUG] donate spotlight done');
   if (has('[data-festival]')) initFestivalHover();
   if (has('.bg-shift-overlay')) initBackgroundShift();
   if (has('.section_solution')) initGradientEmanate();
