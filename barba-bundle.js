@@ -202,19 +202,12 @@ barba.hooks.enter(function(data) {
 barba.hooks.afterEnter(function(data) {
   if (isFirstLoad) {
     isFirstLoad = false;
-    document.fonts.ready.then(function() {
-      requestAnimationFrame(function() {
-        initAfterEnterFunctions(data.next.container);
-        if (hasLenis) { lenis.resize(); lenis.start(); }
-        if (hasScrollTrigger) ScrollTrigger.refresh();
-      });
-    });
-  } else {
-    initAfterEnterFunctions(data.next.container);
-    if (hasLenis) { lenis.resize(); lenis.start(); }
-    if (hasScrollTrigger) ScrollTrigger.refresh();
-    if (window.Webflow) { Webflow.destroy(); Webflow.ready(); Webflow.require('ix2').init(); }
+    return; // once() handles first-load init
   }
+  initAfterEnterFunctions(data.next.container);
+  if (hasLenis) { lenis.resize(); lenis.start(); }
+  if (hasScrollTrigger) ScrollTrigger.refresh();
+  if (window.Webflow) { Webflow.destroy(); Webflow.ready(); Webflow.require('ix2').init(); }
 });
 
 if (typeof barbaPrefetch !== 'undefined') barba.use(barbaPrefetch);
@@ -228,7 +221,10 @@ barba.init({
     sync: true,
     async once(data) {
       initOnceFunctions();
-      return runPageOnceAnimation(data.next.container);
+      await runPageOnceAnimation(data.next.container);
+      await document.fonts.ready;
+      initAfterEnterFunctions(data.next.container);
+      if (hasScrollTrigger) ScrollTrigger.refresh();
     },
     async leave(data) {
       return runPageLeaveAnimation(data.current.container, data.next.container);
