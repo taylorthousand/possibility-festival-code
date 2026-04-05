@@ -42,8 +42,6 @@
 
       overlay.style.setProperty('--spotlight-x', baseX + '%');
       overlay.style.setProperty('--spotlight-y', baseY + '%');
-      overlay.style.setProperty('--spotlight-rx', '20%');
-      overlay.style.setProperty('--spotlight-ry', '28%');
 
       function animTo(tx, ty) {
         gsap.to(sp, {

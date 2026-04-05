@@ -78,7 +78,7 @@ function initAfterEnterFunctions(next) {
   if (has('.bg-shift-overlay')) initBackgroundShift();
   if (has('.section_solution')) initGradientEmanate();
   if (has('[data-parallax]')) initParallaxSections();
-  if (has('[data-polaroid]')) initPolaroidDevelop();
+
   if (has('.section_solution') && has('[data-carousel="polaroid"]')) initSectionSnap();
   if (has('.steps_tabs-menu')) initStepsTabs();
   if (has('.steps_conclusion_text')) initTextColorReveal();
@@ -797,7 +797,6 @@ function initDonationSpotlight() {
     var isHov = false, lmX = 0, lmY = 0, frX = 0, frY = 0;
     var sp = {x:baseX,y:baseY};
     overlay.style.setProperty('--spotlight-x',baseX+'%'); overlay.style.setProperty('--spotlight-y',baseY+'%');
-    overlay.style.setProperty('--spotlight-rx','20%'); overlay.style.setProperty('--spotlight-ry','28%');
 
     function animTo(tx,ty) {
       gsap.to(sp,{x:tx,y:ty,duration:donateSpotCfg.easeDuration,ease:'power2.out',overwrite:'auto',
@@ -1086,28 +1085,6 @@ function initPolaroidCarousel() {
   }, { signal: signal });
 }
 
-// CONTAINER: POLAROID DEVELOP
-
-var polaroidDevCfg = {
-  duration: 4, ease: 'power2.out', start: 'top 95%',
-  filterStart: 'brightness(2) contrast(0.3)', filterEnd: 'brightness(1) contrast(1)',
-  overlayDuration: 3
-};
-
-function initPolaroidDevelop() {
-  nextPage.querySelectorAll('[data-polaroid]').forEach(function(wrapper) {
-    var image = wrapper.querySelector('img');
-    var overlay = wrapper.querySelector('.polaroid-overlay');
-    if (!image) return;
-    gsap.set(image, { filter: polaroidDevCfg.filterStart });
-    if (overlay) gsap.set(overlay, { opacity: 1 });
-    var tl = gsap.timeline({
-      scrollTrigger: { trigger: wrapper, start: polaroidDevCfg.start, once: true }
-    });
-    if (overlay) tl.to(overlay, { opacity: 0, duration: polaroidDevCfg.overlayDuration, ease: polaroidDevCfg.ease }, 0);
-    tl.to(image, { filter: polaroidDevCfg.filterEnd, duration: polaroidDevCfg.duration, ease: polaroidDevCfg.ease }, 0);
-  });
-}
 
 // CONTAINER: SCROLL JUMP
 
