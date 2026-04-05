@@ -33,6 +33,8 @@
       var overlay = section.querySelector('.spotlight-overlay');
       if (!overlay) return;
       var target = section.querySelector('[data-spotlight-target]');
+      var pt = parseFloat(getComputedStyle(section).paddingTop) || 0;
+      if (pt) overlay.style.marginTop = -pt + 'px';
 
       var baseX = donateSpotCfg.baseX;
       var baseY = donateSpotCfg.baseY;

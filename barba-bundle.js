@@ -792,6 +792,8 @@ function initDonationSpotlight() {
   nextPage.querySelectorAll('[data-spotlight-donate]').forEach(function(section) {
     var overlay = section.querySelector('.spotlight-overlay'); if (!overlay) return;
     var target = section.querySelector('[data-spotlight-target]');
+    var pt = parseFloat(getComputedStyle(section).paddingTop) || 0;
+    if (pt) overlay.style.marginTop = -pt + 'px';
     var baseX = donateSpotCfg.baseX, baseY = donateSpotCfg.baseY;
     var isHov = false, lmX = 0, lmY = 0, frX = 0, frY = 0;
     var sp = {x:baseX,y:baseY};
