@@ -26,6 +26,7 @@
     fadeInDuration: 0.6,
     baseX: 50,
     baseY: 50,
+    offsetY: -5,
   };
 
   function initDonationSpotlight() {
@@ -59,7 +60,7 @@
         if (!target) return;
         var r = target.getBoundingClientRect();
         baseX = ((r.left + r.width / 2) / window.innerWidth) * 100;
-        baseY = ((r.top + r.height / 2) / window.innerHeight) * 100;
+        baseY = ((r.top + r.height / 2) / window.innerHeight) * 100 + donateSpotCfg.offsetY;
       }
 
       function applyPos() {

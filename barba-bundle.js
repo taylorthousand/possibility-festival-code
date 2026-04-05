@@ -786,7 +786,7 @@ function initSpotlight() {
 
 // CONTAINER: DONATION SPOTLIGHT
 
-var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, baseX: 50, baseY: 50 };
+var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, baseX: 50, baseY: 50, offsetY: -5 };
 
 function initDonationSpotlight() {
   nextPage.querySelectorAll('[data-spotlight-donate]').forEach(function(section) {
@@ -805,7 +805,7 @@ function initDonationSpotlight() {
       if (!target) return;
       var r = target.getBoundingClientRect();
       baseX = ((r.left+r.width/2)/window.innerWidth)*100;
-      baseY = ((r.top+r.height/2)/window.innerHeight)*100;
+      baseY = ((r.top+r.height/2)/window.innerHeight)*100 + donateSpotCfg.offsetY;
     }
     function applyPos() {
       var ox = isHov ? (lmX-baseX)*donateSpotCfg.damping : frX;
