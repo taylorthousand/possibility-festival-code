@@ -786,7 +786,7 @@ function initSpotlight() {
 
 // CONTAINER: DONATION SPOTLIGHT
 
-var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, baseX: 50, baseY: 50, offsetY: -5 };
+var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, baseX: 50, baseY: 50, offsetY: -4 };
 
 function initDonationSpotlight() {
   nextPage.querySelectorAll('[data-spotlight-donate]').forEach(function(section) {

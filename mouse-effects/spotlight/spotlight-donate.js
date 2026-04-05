@@ -26,7 +26,7 @@
     fadeInDuration: 0.6,
     baseX: 50,
     baseY: 50,
-    offsetY: -5,
+    offsetY: -4,
   };
 
   function initDonationSpotlight() {
