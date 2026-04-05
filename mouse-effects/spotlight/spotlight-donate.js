@@ -81,21 +81,16 @@
         isHov = false;
       });
 
-      ScrollTrigger.create({
-        trigger: section,
-        start: donateSpotCfg.scrollStart,
-        end: '92% bottom',
-        onEnter: function () {
-          gsap.to(overlay, { opacity: 1, duration: donateSpotCfg.fadeInDuration, ease: 'power2.out', overwrite: 'auto' });
-        },
-        onLeave: function () {
-          gsap.to(overlay, { opacity: 0, duration: donateSpotCfg.fadeInDuration, ease: 'power2.out', overwrite: 'auto' });
-        },
-        onEnterBack: function () {
-          gsap.to(overlay, { opacity: 1, duration: donateSpotCfg.fadeInDuration, ease: 'power2.out', overwrite: 'auto' });
-        },
-        onLeaveBack: function () {
-          gsap.to(overlay, { opacity: 0, duration: donateSpotCfg.fadeInDuration, ease: 'power2.out', overwrite: 'auto' });
+      gsap.fromTo(overlay, { opacity: 0 }, {
+        opacity: 1,
+        duration: donateSpotCfg.fadeInDuration,
+        ease: 'power2.out',
+        paused: true,
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          toggleActions: 'play reverse play reverse'
         }
       });
     });
