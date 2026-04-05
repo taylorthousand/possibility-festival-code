@@ -807,10 +807,14 @@ function initDonationSpotlight() {
       baseX = ((r.left+r.width/2)/window.innerWidth)*100;
       baseY = ((r.top+r.height/2)/window.innerHeight)*100 + donateSpotCfg.offsetY;
     }
+    function setPos(tx,ty) {
+      sp.x=tx; sp.y=ty;
+      overlay.style.setProperty('--spotlight-x',tx+'%'); overlay.style.setProperty('--spotlight-y',ty+'%');
+    }
     function applyPos() {
       var ox = isHov ? (lmX-baseX)*donateSpotCfg.damping : frX;
       var oy = isHov ? (lmY-baseY)*donateSpotCfg.damping : frY;
-      animTo(baseX+ox,baseY+oy);
+      setPos(baseX+ox,baseY+oy);
     }
     updBase(); applyPos();
 
