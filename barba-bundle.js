@@ -791,6 +791,7 @@ var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, bas
 function initDonationSpotlight() {
   nextPage.querySelectorAll('[data-spotlight-donate]').forEach(function(section) {
     var overlay = section.querySelector('.spotlight-overlay'); if (!overlay) return;
+    var target = section.querySelector('[data-spotlight-target]');
     section.style.position = section.style.position || 'relative';
     gsap.set(overlay,{position:'absolute',top:0,left:0,width:'100%',height:'100%',margin:0});
     var baseX = donateSpotCfg.baseX, baseY = donateSpotCfg.baseY;
@@ -802,12 +803,18 @@ function initDonationSpotlight() {
       gsap.to(sp,{x:tx,y:ty,duration:donateSpotCfg.easeDuration,ease:'power2.out',overwrite:'auto',
         onUpdate:function(){overlay.style.setProperty('--spotlight-x',sp.x+'%');overlay.style.setProperty('--spotlight-y',sp.y+'%');}});
     }
+    function updBase() {
+      if (!target) return;
+      var r = target.getBoundingClientRect();
+      baseX = ((r.left+r.width/2)/window.innerWidth)*100;
+      baseY = ((r.top+r.height/2)/window.innerHeight)*100;
+    }
     function applyPos() {
       var ox = isHov ? (lmX-baseX)*donateSpotCfg.damping : frX;
       var oy = isHov ? (lmY-baseY)*donateSpotCfg.damping : frY;
       animTo(baseX+ox,baseY+oy);
     }
-    applyPos();
+    updBase(); applyPos();
 
     section.addEventListener('mousemove',function(e){
       isHov=true; lmX=(e.clientX/window.innerWidth)*100; lmY=(e.clientY/window.innerHeight)*100;
@@ -817,6 +824,7 @@ function initDonationSpotlight() {
     section.addEventListener('mouseleave',function(){
       frX=(lmX-baseX)*donateSpotCfg.damping; frY=(lmY-baseY)*donateSpotCfg.damping; isHov=false;
     });
+    ScrollTrigger.create({trigger:section,start:'top bottom',end:'bottom top',onUpdate:function(){updBase();applyPos();}});
 
     gsap.to(overlay,{opacity:1,duration:donateSpotCfg.fadeInDuration,ease:'power2.out'});
   });
