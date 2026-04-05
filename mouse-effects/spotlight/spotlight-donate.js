@@ -33,6 +33,8 @@
     document.querySelectorAll('[data-spotlight-donate]').forEach(function (section) {
       var overlay = section.querySelector('.spotlight-overlay');
       if (!overlay) return;
+      section.style.position = section.style.position || 'relative';
+      gsap.set(overlay, { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', margin: 0 });
 
       var baseX = donateSpotCfg.baseX;
       var baseY = donateSpotCfg.baseY;
