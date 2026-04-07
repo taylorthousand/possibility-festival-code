@@ -1,12 +1,13 @@
+<style>
 /* ===========================================
-   SPOTLIGHT - CSS for fog overlay with radial cutout
+   DONATION SPOTLIGHT - fog overlay, no beam
    =========================================== */
 
-[data-spotlight] .spotlight-overlay {
-  --spotlight-x: 65%;
-  --spotlight-y: 30%;
-  --spotlight-rx: 28%;
-  --spotlight-ry: 40%;
+[data-spotlight-donate] .spotlight-overlay {
+  --spotlight-x: 50%;
+  --spotlight-y: 50%;
+  --spotlight-rx: 20%;
+  --spotlight-ry: 28%;
   --spotlight-rotation: 0deg;
 
   position: sticky;
@@ -19,7 +20,7 @@
   opacity: 0;
 }
 
-[data-spotlight] .spotlight-overlay::before {
+[data-spotlight-donate] .spotlight-overlay::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -35,7 +36,7 @@
   transform: rotate(var(--spotlight-rotation));
 }
 
-[data-spotlight] .spotlight-overlay::after {
+[data-spotlight-donate] .spotlight-overlay::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -48,11 +49,4 @@
   );
   transform: rotate(var(--spotlight-rotation));
 }
-
-[data-spotlight] .spotlight-beam {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  /* filter, opacity, background, and mask all set by JS */
-}
+</style>

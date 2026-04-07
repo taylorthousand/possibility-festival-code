@@ -88,8 +88,8 @@ function initTextReveal() {
     // Preserve marked spans before SplitText destroys them
     const preserved = preserveSpans(heading)
 
-    // Reset CSS visibility (prevents FOUC)
-    gsap.set(heading, { autoAlpha: 1 })
+    // Make heading measurable for SplitText (keeps opacity as-is until onSplit)
+    gsap.set(heading, { visibility: 'visible' })
 
     // Get the trigger variant (early or late)
     const speed = heading.dataset.split
@@ -117,6 +117,7 @@ function initTextReveal() {
       onSplit: function(instance) {
         // Restore preserved spans after split
         restoreSpans(heading, preserved)
+        gsap.set(heading, { autoAlpha: 1 })
 
         const targets = instance[type]
         const config = splitConfig[type]

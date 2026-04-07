@@ -17,10 +17,7 @@ function initScrollJump() {
   const carousel = document.querySelector('.section_carousel');
   const solution = document.querySelector('.section_solution');
 
-  console.log('ScrollJump init:', { carousel, solution });
-
   if (!carousel || !solution) {
-    console.log('ScrollJump: Missing elements, exiting');
     return;
   }
 

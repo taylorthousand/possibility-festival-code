@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Draw SVG Callout Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a1a;
+      min-height: 300vh;
+      font-family: monospace;
+      color: #ccc;
+    }
+    .spacer {
+      height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      opacity: 0.4;
+    }
+    .callout-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+    }
+    .callout-wrapper {
+      width: 320px;
+    }
+    .controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 8px;
+    }
+    .controls button {
+      padding: 8px 16px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+    .controls button:hover { background: #e6b800; }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <button id="replay">Replay</button>
+  </div>
+
+  <div class="spacer">&#8595; Scroll down to trigger &#8595;</div>
+
+  <div class="callout-section">
+    <div class="callout-wrapper" data-draw-callout>
+      <svg width="108" height="45" viewBox="0 0 108 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+        <defs>
+          <!--
+            Mask strokes: thick white paths that trace the "writing motion"
+            of each letter. DrawSVG animates these from 0% → 100%,
+            progressively revealing the filled letter underneath.
+          -->
+          <mask id="mask-b">
+            <!-- vertical downstroke -->
+            <path class="draw-stroke" d="M44 6 C43 14 41 24 42 36"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+            <!-- bowl -->
+            <path class="draw-stroke" d="M49 5 C53 5 55 10 52 17 C55 19 55 27 48 33"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+          </mask>
+
+          <mask id="mask-a">
+            <!-- single stem stroke -->
+            <path class="draw-stroke" d="M63 7 C63 15 64 24 65 32"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+          </mask>
+
+          <mask id="mask-d">
+            <!-- bowl curve from top around and down -->
+            <path class="draw-stroke" d="M72 8 C78 8 79 16 78 22 C76 28 72 31 71 32"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+          </mask>
+
+          <mask id="mask-l">
+            <!-- downstroke then foot -->
+            <path class="draw-stroke" d="M84 7 L83 30 L87 30"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </mask>
+
+          <mask id="mask-y">
+            <!-- left arm + descender -->
+            <path class="draw-stroke" d="M93 7 C93 13 94 18 95 20 C95 24 94 28 94 32"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+            <!-- right arm -->
+            <path class="draw-stroke" d="M105 3 C105 10 104 20 103 33"
+              stroke="white" stroke-width="40" fill="none" stroke-linecap="round"/>
+          </mask>
+        </defs>
+
+        <!-- Arrow / callout stroke (DrawSVG directly on the visible path) -->
+        <path class="callout-arrow" d="M1.99996 42.6612C2.63737 42.4622 4.23409 41.5385 7.11233 40.003C16.2184 35.1449 18.8204 33.318 20.7224 32.1629C22.6974 30.9634 25.0442 30.3126 25.4625 29.9275C27.2467 28.2851 19.0099 28.3632 17.3834 27.8414C15.9207 27.3722 23.4794 28.4171 26.3108 28.9976C26.4488 30.0062 26.245 31.1331 25.9184 32.4932C25.74 33.4114 25.5361 34.7925 25.2222 36.2948" stroke="#FFCC00" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+        <!--
+          Each character is a compound <path> (all subpaths in one d=)
+          so the winding rule correctly creates counter holes (b, a, d).
+          Each <g> is masked by its drawing-motion mask.
+        -->
+
+        <!-- b -->
+        <g mask="url(#mask-b)">
+          <path d="M41.8643 35.9839C41.6645 35.9932 41.4573 35.8427 41.3681 35.6466C40.3516 32.7307 39.7727 29.7543 39.6315 26.7176C39.3287 20.2047 41.0525 13.3572 44.8467 6.25332C44.9191 6.08977 45.0753 6.00243 45.2351 5.995C45.5148 5.98199 45.7239 6.17249 45.7369 6.45219C45.7406 6.5321 45.7043 6.61387 45.6681 6.69564C41.9882 13.6741 40.2951 20.3199 40.5905 26.673C40.7279 29.6298 41.3031 32.5263 42.2741 35.3242C42.3159 35.3623 42.3196 35.4422 42.3215 35.4821C42.3345 35.7618 42.144 35.9709 41.8643 35.9839Z M46.7853 33.1924C46.5056 33.2054 46.2965 33.0149 46.2835 32.7352L46.2798 32.6552C46.8913 26.8606 48.1776 9.74237 48.4063 6.04777C48.4351 5.80617 48.5076 5.64263 48.66 5.47537C48.8142 5.34806 48.9703 5.26072 49.1701 5.25143C51.9689 5.16134 54.5448 5.44201 54.7194 9.19795C54.8513 12.0349 52.9779 14.8049 51.0711 16.8557C52.9258 18.8517 54.184 21.7964 54.3066 24.4336C54.4738 28.0297 52.6078 30.9595 49.0061 32.7287C48.9281 32.7724 48.8881 32.7742 48.8082 32.7779C48.5285 32.791 48.3194 32.6005 48.3064 32.3208C48.2971 32.121 48.4096 31.9556 48.5657 31.8682C51.8533 30.2338 53.4981 27.7147 53.3476 24.4782C53.2361 22.0807 52.109 19.3702 50.4234 17.5665C49.8482 18.1138 49.3093 18.5794 48.8484 19.0012C48.5761 19.174 48.4599 19.2595 48.42 19.2614L48.4181 19.2214C47.9841 24.5273 47.5556 29.9531 47.2462 32.7705C47.2173 33.0121 47.025 33.1812 46.7853 33.1924Z M48.5222 18.0153C50.6781 16.1532 53.9202 12.6788 53.7604 9.24254C53.6267 6.36565 51.9736 6.12216 49.3745 6.20296C49.2602 8.05027 48.9237 12.8711 48.5222 18.0153Z" fill="#FFCC00" stroke="#FFCC00" stroke-width="0.8"/>
+        </g>
+
+        <!-- a -->
+        <g mask="url(#mask-a)">
+          <path d="M65.4728 32.4036C65.2331 32.4147 65.024 32.2242 64.9729 31.9863C64.8085 31.0329 64.5734 28.5612 64.3523 25.5282C63.0793 25.7075 60.3297 25.9955 59.2127 26.0875C58.5232 28.4821 57.8625 30.6351 57.3718 32.1395C57.3412 32.3412 57.147 32.4703 56.9472 32.4796C56.6675 32.4926 56.4584 32.3021 56.4454 32.0224C56.4417 31.9425 56.4398 31.9026 56.4779 31.8607C58.2231 26.3337 62.2571 12.3312 63.0479 9.53149L63.1548 9.24622L63.1966 9.28432L63.0907 7.00678C63.0777 6.72708 63.2682 6.51801 63.5479 6.505C63.8276 6.492 64.0367 6.68249 64.0497 6.96219C64.1221 10.2424 65.4237 28.7619 65.9263 31.8219L65.93 31.9018C65.943 32.1815 65.7525 32.3905 65.4728 32.4036Z M59.5259 25.0718C60.8027 24.9724 63.1945 24.7411 64.2678 24.5711C63.9184 20.5029 63.5719 15.6337 63.361 11.9596C62.4652 15.0845 60.9105 20.4025 59.5259 25.0718Z" fill="#FFCC00" stroke="#FFCC00" stroke-width="0.8"/>
+        </g>
+
+        <!-- d -->
+        <g mask="url(#mask-d)">
+          <path d="M70.6456 31.6425C70.4858 31.6499 70.3222 31.5774 70.2367 31.4613C69.957 31.4743 69.748 31.2838 69.7349 31.0041L69.7312 30.9242C70.3771 25.0078 71.2917 11.9512 71.5743 7.6935C71.6031 7.4519 71.7137 7.24654 71.9915 7.19358C72.3874 7.09509 72.7851 7.03656 73.1447 7.01984C76.541 6.86192 78.9421 10.2741 79.1799 15.3886C79.4883 22.0214 76.2238 28.46 70.8835 31.5914C70.8036 31.5951 70.7255 31.6388 70.6456 31.6425Z M70.7534 30.5163C75.5798 27.5289 78.507 21.5865 78.2209 15.4332C78.0054 10.7982 75.9862 7.84875 73.1893 7.9788C72.9895 7.98809 72.7497 7.99924 72.5119 8.05034C72.1949 12.4298 71.3556 24.5218 70.7534 30.5163Z" fill="#FFCC00" stroke="#FFCC00" stroke-width="0.8"/>
+        </g>
+
+        <!-- l -->
+        <g mask="url(#mask-l)">
+          <path d="M84.4768 31.1996C83.7176 31.2349 82.9966 31.2284 82.3517 31.1382C82.1101 31.1094 81.9465 31.037 81.8174 30.8427C81.6483 30.6504 81.6009 30.4924 81.6297 30.2508C81.9364 26.5125 83.2868 13.3556 84.2133 6.58528C84.2421 6.34368 84.4345 6.17457 84.6742 6.16342C84.9539 6.15042 85.163 6.34091 85.176 6.62061L85.1797 6.70052C84.2494 13.391 82.9279 26.3063 82.5886 30.2062C83.1917 30.2583 83.7929 30.2704 84.4322 30.2406C85.3912 30.1961 86.3464 30.0716 87.2162 29.8309L87.3361 29.8253C87.6158 29.8123 87.8248 30.0028 87.8378 30.2825C87.849 30.5223 87.6985 30.7295 87.4606 30.7806C86.5509 31.0231 85.5157 31.1513 84.4768 31.1996Z" fill="#FFCC00" stroke="#FFCC00" stroke-width="0.8"/>
+        </g>
+
+        <!-- y -->
+        <g mask="url(#mask-y)">
+          <path d="M94.0695 31.8348C93.7898 31.8478 93.5807 31.6573 93.5677 31.3776L93.5658 31.3376C93.7118 28.4477 94.1235 24.3842 94.6235 21.3577L94.5454 21.4014C94.0595 18.7011 93.7027 16.1949 93.3478 13.7287C93.004 11.5023 92.6621 9.31583 92.2802 7.1312L92.2765 7.05129C92.2635 6.77159 92.454 6.56252 92.7337 6.54952C92.9734 6.53837 93.1825 6.72886 93.2336 6.96675C93.6155 9.15137 93.9574 11.3378 94.2631 13.6061C94.5446 15.3549 94.788 17.1455 95.1151 19.0124C95.931 15.8911 98.0999 10.8649 100.429 5.83135C100.501 5.6678 100.655 5.5405 100.855 5.53121C101.135 5.51821 101.344 5.7087 101.357 5.9884C101.361 6.06832 101.324 6.15009 101.328 6.23C98.2327 12.8609 96.4049 17.4708 95.8807 19.9778C95.2572 22.93 94.6903 27.9617 94.5285 31.3729C94.4997 31.6145 94.3092 31.8236 94.0695 31.8348Z M102.788 33.1512C102.508 33.1642 102.299 32.9738 102.286 32.6941C102.283 32.6141 102.281 32.5742 102.317 32.4924C104.92 25.6041 106.057 19.0642 105.762 12.7111C105.61 9.4346 105.1 6.21482 104.152 3.05543L104.146 2.93555C104.133 2.65586 104.324 2.44678 104.603 2.43378C104.843 2.42263 105.05 2.57317 105.1 2.7711C106.053 6.05036 106.565 9.3101 106.721 12.6665C107.022 19.1395 105.85 25.8011 103.215 32.8511C103.142 33.0147 102.988 33.142 102.788 33.1512Z" fill="#FFCC00" stroke="#FFCC00" stroke-width="0.8"/>
+        </g>
+
+      </svg>
+    </div>
+  </div>
+
+  <div class="spacer">&#8593; Animation above &#8593;</div>
+
+  <!-- GSAP + Plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/DrawSVGPlugin.min.js"></script>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin);
+
+    /* ── Config ── */
+    const config = {
+      arrowDuration: 1,
+      arrowEase: 'power2.inOut',
+      charDrawDuration: 0.35,
+      charOverlap: 0.1,       // overlap between strokes within a letter
+      letterGap: -0.05,       // overlap between letters (negative = overlap)
+      scrollStart: 'top 60%',
+    };
+
+    function buildTimeline(wrapper) {
+      const arrow = wrapper.querySelector('.callout-arrow');
+
+      /* Collect all mask strokes grouped by letter */
+      const maskIds = ['mask-b', 'mask-a', 'mask-d', 'mask-l', 'mask-y'];
+      const letterStrokes = maskIds.map(id => {
+        const mask = wrapper.querySelector(`#${id}`);
+        return mask.querySelectorAll('.draw-stroke');
+      });
+
+      /* Initial state: hide arrow, hide all mask strokes */
+      gsap.set(arrow, { drawSVG: '0%' });
+      letterStrokes.forEach(strokes => {
+        gsap.set(strokes, { drawSVG: '0%' });
+      });
+
+      /* Build timeline */
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: wrapper,
+          start: config.scrollStart,
+          toggleActions: 'play none none none',
+        }
+      });
+
+      /* 1. Draw the arrow */
+      tl.to(arrow, {
+        drawSVG: '100%',
+        duration: config.arrowDuration,
+        ease: config.arrowEase,
+      });
+
+      /* 2. Draw each letter's mask strokes sequentially */
+      letterStrokes.forEach((strokes, letterIndex) => {
+        strokes.forEach((stroke, strokeIndex) => {
+          const position = strokeIndex === 0
+            ? (letterIndex === 0 ? '-=0.1' : `+=${config.letterGap}`)
+            : `-=${config.charOverlap}`;
+
+          tl.to(stroke, {
+            drawSVG: '100%',
+            duration: config.charDrawDuration,
+            ease: 'power1.inOut',
+          }, position);
+        });
+      });
+
+      return tl;
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', () => {
+      const wrapper = document.querySelector('[data-draw-callout]');
+      let tl = buildTimeline(wrapper);
+
+      /* Replay button */
+      document.getElementById('replay').addEventListener('click', () => {
+        tl.restart();
+      });
+    });
+  </script>
+
+</body>
+</html>

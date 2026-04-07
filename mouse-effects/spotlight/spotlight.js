@@ -256,18 +256,42 @@ function initSpotlight() {
     let isHovering = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
+    let frozenOffsetX = 0;
+    let frozenOffsetY = 0;
+
+    // Proxy object — single source of truth for current animated position.
+    // GSAP tweens this; onUpdate drives both CSS vars and beam rendering.
+    const spotPos = { x: baseX, y: baseY, ox: 0, oy: 0 };
 
     // Set initial position
     overlay.style.setProperty('--spotlight-x', `${baseX}%`);
     overlay.style.setProperty('--spotlight-y', `${baseY}%`);
 
-    // --- Helper: compute damped mouse offset (reused for beam) ---
+    // --- Helper: compute damped mouse offset ---
     function getMouseOffset() {
-      if (!isHovering) return { x: 0, y: 0 };
+      if (!isHovering) return { x: frozenOffsetX, y: frozenOffsetY };
       return {
         x: (lastMouseX - baseX) * spotlightConfig.damping,
         y: (lastMouseY - baseY) * spotlightConfig.damping
       };
+    }
+
+    // --- Helper: animate ellipse + beam to a target position in lockstep ---
+    function animateTo(targetX, targetY, offsetX, offsetY) {
+      gsap.to(spotPos, {
+        x: targetX,
+        y: targetY,
+        ox: offsetX,
+        oy: offsetY,
+        duration: spotlightConfig.easeDuration,
+        ease: 'power2.out',
+        overwrite: 'auto',
+        onUpdate: function() {
+          overlay.style.setProperty('--spotlight-x', spotPos.x + '%');
+          overlay.style.setProperty('--spotlight-y', spotPos.y + '%');
+          updateBeam(beamOuter, beamInner, spotPos.x, spotPos.y, spotPos.ox, spotPos.oy);
+        }
+      });
     }
 
     // --- Helper: apply current spotlight position ---
@@ -275,23 +299,7 @@ function initSpotlight() {
       var offset = getMouseOffset();
       var spotX = baseX + offset.x;
       var spotY = baseY + offset.y;
-
-      if (isHovering) {
-        gsap.to(overlay, {
-          '--spotlight-x': `${spotX}%`,
-          '--spotlight-y': `${spotY}%`,
-          duration: spotlightConfig.easeDuration,
-          ease: 'power2.out',
-          overwrite: 'auto'
-        });
-      } else {
-        gsap.set(overlay, {
-          '--spotlight-x': `${baseX}%`,
-          '--spotlight-y': `${baseY}%`
-        });
-      }
-
-      updateBeam(beamOuter, beamInner, spotX, spotY, offset.x, offset.y);
+      animateTo(spotX, spotY, offset.x, offset.y);
     }
 
     // --- Helper: recalculate base from target's viewport position ---
@@ -312,33 +320,19 @@ function initSpotlight() {
       lastMouseX = (e.clientX / window.innerWidth) * 100;
       lastMouseY = (e.clientY / window.innerHeight) * 100;
 
-      const spotX = baseX + (lastMouseX - baseX) * spotlightConfig.damping;
-      const spotY = baseY + (lastMouseY - baseY) * spotlightConfig.damping;
       const offsetX = (lastMouseX - baseX) * spotlightConfig.damping;
       const offsetY = (lastMouseY - baseY) * spotlightConfig.damping;
+      const spotX = baseX + offsetX;
+      const spotY = baseY + offsetY;
 
-      gsap.to(overlay, {
-        '--spotlight-x': `${spotX}%`,
-        '--spotlight-y': `${spotY}%`,
-        duration: spotlightConfig.easeDuration,
-        ease: 'power2.out',
-        overwrite: 'auto'
-      });
-
-      updateBeam(beamOuter, beamInner, spotX, spotY, offsetX, offsetY);
+      animateTo(spotX, spotY, offsetX, offsetY);
     });
 
     section.addEventListener('mouseleave', () => {
+      // Freeze the current offset so the spotlight holds position
+      frozenOffsetX = (lastMouseX - baseX) * spotlightConfig.damping;
+      frozenOffsetY = (lastMouseY - baseY) * spotlightConfig.damping;
       isHovering = false;
-      gsap.to(overlay, {
-        '--spotlight-x': `${baseX}%`,
-        '--spotlight-y': `${baseY}%`,
-        duration: spotlightConfig.easeDuration,
-        ease: 'power2.out',
-        overwrite: 'auto'
-      });
-
-      updateBeam(beamOuter, beamInner, baseX, baseY, 0, 0);
     });
 
     // --- ScrollTrigger 1: position tracking (entire time section is in viewport) ---
@@ -352,13 +346,24 @@ function initSpotlight() {
       }
     });
 
-    // --- ScrollTrigger 2: fog opacity fade only ---
+    // --- ScrollTrigger 2: fog opacity fade in/out ---
     ScrollTrigger.create({
       trigger: section,
       start: spotlightConfig.scrollStart,
-      end: 'bottom bottom',
-      toggleActions: 'play none none reverse',
+      end: '92% bottom',
       onEnter: () => gsap.to(overlay, {
+        opacity: 1,
+        duration: spotlightConfig.fadeInDuration,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      }),
+      onLeave: () => gsap.to(overlay, {
+        opacity: 0,
+        duration: spotlightConfig.fadeInDuration,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      }),
+      onEnterBack: () => gsap.to(overlay, {
         opacity: 1,
         duration: spotlightConfig.fadeInDuration,
         ease: 'power2.out',

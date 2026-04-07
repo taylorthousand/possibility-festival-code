@@ -1,0 +1,24 @@
+/* ===========================================
+   MENU BUTTON REVEAL - Supporting Styles
+   =========================================== */
+
+/* Wrapper is the mask — clips the button while it's translated out */
+.menu_button-wrapper {
+  overflow: hidden;
+}
+
+/* Component and button start with pointer-events off */
+.nav_component {
+  pointer-events: none;
+}
+
+.desktop_menu-button {
+  pointer-events: none;
+}
+
+/* Keep visible in Webflow Designer and Editor */
+.wf-design-mode .desktop_menu-button,
+.w-editor .desktop_menu-button {
+  pointer-events: auto !important;
+  transform: none !important;
+}

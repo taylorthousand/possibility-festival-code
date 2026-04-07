@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotlight - Live Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a1a;
+    font-family: system-ui, sans-serif;
+    color: #ccc;
+    overflow-x: hidden;
+  }
+
+  /* Spacer sections to allow scrolling into/out of spotlight */
+  .spacer {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #555;
+  }
+
+  /* Spotlight section — tall enough to scroll through */
+  .spotlight-section {
+    position: relative;
+    width: 100%;
+    height: 300vh;
+    background: #111;
+  }
+
+  /* Fake polaroid target */
+  .fake-target {
+    position: sticky;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 60%;
+    width: 260px;
+    height: 340px;
+    background: white;
+    border: 10px solid white;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 10;
+  }
+  .fake-target::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #8B7355 0%, #A0522D 50%, #6B4226 100%);
+  }
+</style>
+<link rel="stylesheet" href="spotlight.css">
+</head>
+<body>
+
+<div class="spacer">Scroll down to enter the spotlight section</div>
+
+<div class="spotlight-section" data-spotlight>
+  <div class="spotlight-overlay"></div>
+  <div class="fake-target" data-spotlight-target></div>
+</div>
+
+<div class="spacer">You've scrolled past the spotlight section</div>
+
+<!-- GSAP + ScrollTrigger (same CDN versions used in Webflow) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<!-- The actual spotlight code -->
+<script src="spotlight.js"></script>
+</body>
+</html>

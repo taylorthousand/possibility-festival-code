@@ -1,0 +1,8 @@
+.pf-button_hover {
+  z-index: 1;
+  transition: z-index 0s 0.1s;
+}
+
+.pf-button_container:hover .pf-button_hover {
+  z-index: 3;
+}

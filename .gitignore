@@ -1,2 +1,5 @@
 .DS_Store
 .conversation-history.jsonl
+
+# Local Netlify folder
+.netlify

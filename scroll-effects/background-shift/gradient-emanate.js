@@ -12,10 +12,8 @@ const emanateConfig = {
 
 function initGradientEmanate() {
   const sections = document.querySelectorAll('.section_solution');
-  console.log('Gradient emanate: found', sections.length, 'sections');
 
   sections.forEach(section => {
-    console.log('Animating section:', section);
     gsap.to(section, {
       '--stop1': `${emanateConfig.stop1End}%`,
       '--stop2': `${emanateConfig.stop2End}%`,

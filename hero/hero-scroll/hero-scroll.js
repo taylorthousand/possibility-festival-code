@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   gsap.to(inner, {
     scale: 0.7,
     rotation: 15,
+    opacity: 0.85,
     outline: '1rem solid #000000',
     ease: 'none',
     scrollTrigger: {

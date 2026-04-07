@@ -1072,14 +1072,17 @@ function initDonationHeaderScroll() {
   // Phase 3: Spotlight hole fill (scrub-linked, same timeline)
   var overlay = section.querySelector('.spotlight-overlay');
   if (overlay) {
-    var startRX = parseFloat(getComputedStyle(overlay).getPropertyValue('--spotlight-rx')) || 20;
-    var startRY = parseFloat(getComputedStyle(overlay).getPropertyValue('--spotlight-ry')) || 28;
+    var startRX = null, startRY = null;
     var spotHole = { scale: 1 };
     tl.to(spotHole, {
       scale: 0,
       duration: 0.4,
       ease: 'power2.in',
       onUpdate: function() {
+        if (startRX === null) {
+          startRX = parseFloat(getComputedStyle(overlay).getPropertyValue('--spotlight-rx')) || 20;
+          startRY = parseFloat(getComputedStyle(overlay).getPropertyValue('--spotlight-ry')) || 28;
+        }
         overlay.style.setProperty('--spotlight-rx', (startRX * spotHole.scale) + '%');
         overlay.style.setProperty('--spotlight-ry', (startRY * spotHole.scale) + '%');
       }
