@@ -1121,10 +1121,13 @@ function initFestivalHover() {
     var polaroid = nextPage.querySelector('.polaroid.vertical.is-festival[data-festival="' + id + '"]');
     if (!polaroid) return;
 
+    var heading = link.querySelector('.heading-style-h4-56.is-festivals');
+
     link.addEventListener('mouseenter', function() {
       activePolaroid = polaroid;
       gsap.set(polaroid, { x: mouseX + OFFSET_X, y: mouseY + OFFSET_Y });
       gsap.to(polaroid, { autoAlpha: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
+      if (heading) gsap.to(heading, { skewX: -10, duration: 0.3, ease: 'power2.out', overwrite: true });
     }, { signal: signal });
 
     link.addEventListener('mouseleave', function() {
@@ -1135,6 +1138,7 @@ function initFestivalHover() {
         overwrite: 'auto',
         onComplete: function() { activePolaroid = null; }
       });
+      if (heading) gsap.to(heading, { skewX: 0, duration: 0.2, ease: 'power2.out', overwrite: true });
     }, { signal: signal });
   });
 }
