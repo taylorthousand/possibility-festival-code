@@ -523,25 +523,24 @@ function initMenuButton() {
 
 function createMenuButtonRevealST() {
   if (!menuButton_el) return;
-  gsap.fromTo(menuButton_el,
+  var revealTween = gsap.fromTo(menuButton_el,
     { yPercent: 110 },
-    {
-      yPercent: 0, duration: 0.48, ease: 'expo.out',
-      scrollTrigger: {
-        trigger: document.body,
-        start: function() { return Math.round(0.9 * window.innerHeight) + ' top'; },
-        toggleActions: 'play none none reverse',
-        onEnter: function() {
-          if (menuButton_navComponent) menuButton_navComponent.style.pointerEvents = 'auto';
-          menuButton_el.style.pointerEvents = 'auto';
-        },
-        onLeaveBack: function() {
-          if (menuButton_navComponent) menuButton_navComponent.style.pointerEvents = 'none';
-          menuButton_el.style.pointerEvents = 'none';
-        }
-      }
-    }
+    { yPercent: 0, duration: 0.6, ease: 'expo.out', paused: true }
   );
+  ScrollTrigger.create({
+    trigger: document.body,
+    start: function() { return Math.round(0.9 * window.innerHeight) + ' top'; },
+    onEnter: function() {
+      revealTween.timeScale(1).play();
+      if (menuButton_navComponent) menuButton_navComponent.style.pointerEvents = 'auto';
+      menuButton_el.style.pointerEvents = 'auto';
+    },
+    onLeaveBack: function() {
+      revealTween.timeScale(1.5).reverse();
+      if (menuButton_navComponent) menuButton_navComponent.style.pointerEvents = 'none';
+      menuButton_el.style.pointerEvents = 'none';
+    }
+  });
 }
 
 function refreshMenuButtonReveal() { createMenuButtonRevealST(); }
