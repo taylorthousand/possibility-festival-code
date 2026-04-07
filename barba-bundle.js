@@ -375,6 +375,10 @@ barba.hooks.afterEnter(function(data) {
     Webflow.ready();
     Webflow.require('ix2').init();
     document.dispatchEvent(new Event('readystatechange'));
+    requestAnimationFrame(function() {
+      Webflow.require('ix2').init();
+      document.dispatchEvent(new Event('readystatechange'));
+    });
   }
 });
 
