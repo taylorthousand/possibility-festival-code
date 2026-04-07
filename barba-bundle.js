@@ -185,31 +185,39 @@ function runPageOnceAnimation(next) {
     heroLoadFired = true;
   }
   if (loadHeadings.length) {
-    // Defer SplitText until the reveal moment so fonts have time to load.
-    // The preloader runs ~3s before this point — fonts are loaded in nearly all cases.
+    // Wait for fonts before splitting — wrong font metrics cause narrow line wrappers.
+    // On normal connections fonts are loaded well before this point in the timeline.
+    // On slow connections the text stays hidden until fonts arrive, then animates in.
     loadTl.call(function() {
-      loadHeadings.forEach(function(heading) {
-        var splitType = heading.dataset.splitReveal || 'words';
-        var slow = heading.hasAttribute('data-split-slow');
-        var cfg = splitRevealConfig[splitType] || splitRevealConfig.words;
-        var typesToSplit = splitType === 'lines' ? 'lines' :
-          splitType === 'words' ? 'lines, words' : 'lines, words, chars';
+      function splitAndReveal() {
+        loadHeadings.forEach(function(heading) {
+          var splitType = heading.dataset.splitReveal || 'words';
+          var slow = heading.hasAttribute('data-split-slow');
+          var cfg = splitRevealConfig[splitType] || splitRevealConfig.words;
+          var typesToSplit = splitType === 'lines' ? 'lines' :
+            splitType === 'words' ? 'lines, words' : 'lines, words, chars';
 
-        SplitText.create(heading, {
-          type: typesToSplit, mask: 'lines',
-          linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
-          onSplit: function(instance) {
-            var targets = instance[splitType];
-            gsap.set(heading, { autoAlpha: 1 });
-            gsap.from(targets, {
-              yPercent: 110,
-              duration: slow ? cfg.duration * 2 : cfg.duration,
-              stagger: slow ? cfg.stagger * 2 : cfg.stagger,
-              ease: 'expo.out'
-            });
-          }
+          SplitText.create(heading, {
+            type: typesToSplit, mask: 'lines',
+            linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
+            onSplit: function(instance) {
+              var targets = instance[splitType];
+              gsap.set(heading, { autoAlpha: 1 });
+              gsap.from(targets, {
+                yPercent: 110,
+                duration: slow ? cfg.duration * 2 : cfg.duration,
+                stagger: slow ? cfg.stagger * 2 : cfg.stagger,
+                ease: 'expo.out'
+              });
+            }
+          });
         });
-      });
+      }
+      if (document.fonts.status === 'loaded') {
+        splitAndReveal();
+      } else {
+        document.fonts.ready.then(splitAndReveal);
+      }
     }, null, 'hideContent+=0.5');
     loadRevealFired = true;
   }
