@@ -1123,6 +1123,7 @@ function initFestivalHover() {
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
 
     link.addEventListener('mouseenter', function() {
+      console.log('[DIAG] mouseenter #' + id, 'polaroid:', polaroid, 'computed:', window.getComputedStyle(polaroid).cssText);
       activePolaroid = polaroid;
       gsap.set(polaroid, { x: mouseX + OFFSET_X, y: mouseY + OFFSET_Y });
       gsap.to(polaroid, { autoAlpha: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
