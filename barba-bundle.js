@@ -1099,7 +1099,14 @@ function initFestivalHover() {
   var mouseX = 0, mouseY = 0;
   var activePolaroid = null;
 
-  nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)').forEach(function(p) {
+  var allFestivalEls = nextPage.querySelectorAll('[data-festival]');
+  var polaroidEls = nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)');
+  var linkEls = nextPage.querySelectorAll('.festivals_item-link[data-festival]');
+  console.log('[DIAG] all [data-festival]:', allFestivalEls.length, allFestivalEls);
+  console.log('[DIAG] polaroid candidates:', polaroidEls.length, polaroidEls);
+  console.log('[DIAG] link candidates:', linkEls.length, linkEls);
+
+  polaroidEls.forEach(function(p) {
     gsap.set(p, { position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
   });
 
@@ -1117,16 +1124,15 @@ function initFestivalHover() {
     }
   }, { signal: signal });
 
-  nextPage.querySelectorAll('.festivals_item-link[data-festival]').forEach(function(link) {
+  linkEls.forEach(function(link) {
     var id = link.getAttribute('data-festival');
     var polaroid = nextPage.querySelector('[data-festival="' + id + '"]:not(.festivals_item-link)');
+    console.log('[DIAG] link #' + id, '→ polaroid found:', !!polaroid, polaroid);
     if (!polaroid) return;
 
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
-    console.log('[DIAG] festival link #' + id, 'heading found:', !!heading, heading);
 
     link.addEventListener('mouseenter', function() {
-      console.log('[DIAG] mouseenter link #' + id, 'heading:', heading);
       activePolaroid = polaroid;
       gsap.set(polaroid, { x: mouseX + OFFSET_X, y: mouseY + OFFSET_Y });
       gsap.to(polaroid, { autoAlpha: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
