@@ -1092,6 +1092,7 @@ function initDonationHeaderScroll() {
 // CONTAINER: FESTIVAL HOVER
 
 function initFestivalHover() {
+  console.log('[DIAG] initFestivalHover called');
   var signal = containerAbort ? containerAbort.signal : undefined;
   var OFFSET_X = 20;
   var OFFSET_Y = 20;
