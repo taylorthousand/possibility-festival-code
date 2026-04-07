@@ -184,6 +184,7 @@ function runPageOnceAnimation(next) {
     loadTl.to(hero, { padding: '.75rem', duration: 0.4, ease: 'power2.inOut' });
     heroLoadFired = true;
   }
+  console.log('[DIAG] fonts.status at preloader SplitText:', document.fonts.status);
   loadHeadings.forEach(function(heading) {
     var splitType = heading.dataset.splitReveal || 'words';
     var slow = heading.hasAttribute('data-split-slow');
