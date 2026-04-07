@@ -37,12 +37,6 @@
         delay: SNAP_DELAY,
         ease: SNAP_EASE,
         directional: true,
-        onStart: function () {
-          if (typeof lenis !== 'undefined') lenis.stop();
-        },
-        onComplete: function () {
-          if (typeof lenis !== 'undefined') lenis.start();
-        },
       },
     });
   }
