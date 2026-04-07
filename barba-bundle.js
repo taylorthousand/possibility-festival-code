@@ -1133,6 +1133,7 @@ function initFestivalHover() {
 
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
 
+    link.addEventListener('mouseenter', function() { console.log('[DIAG-NOSIGNAL] mouseenter #' + id); });
     link.addEventListener('mouseenter', function() {
       activePolaroid = polaroid;
       gsap.set(polaroid, { x: mouseX + OFFSET_X, y: mouseY + OFFSET_Y });
