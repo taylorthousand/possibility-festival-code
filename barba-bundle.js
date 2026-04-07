@@ -526,7 +526,7 @@ function createMenuButtonRevealST() {
   gsap.fromTo(menuButton_el,
     { yPercent: 110 },
     {
-      yPercent: 0, duration: 0.6, ease: 'expo.out',
+      yPercent: 0, duration: 0.48, ease: 'expo.out',
       scrollTrigger: {
         trigger: document.body,
         start: function() { return Math.round(0.9 * window.innerHeight) + ' top'; },
