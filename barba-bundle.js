@@ -371,14 +371,14 @@ barba.hooks.afterEnter(function(data) {
   if (hasLenis) { lenis.resize(); lenis.start(); }
   if (hasScrollTrigger) ScrollTrigger.refresh();
   if (window.Webflow) {
+    var parser = new DOMParser();
+    var dom = parser.parseFromString(data.next.html, 'text/html');
+    var wfPageId = dom.querySelector('html').getAttribute('data-wf-page');
+    if (wfPageId) document.documentElement.setAttribute('data-wf-page', wfPageId);
     Webflow.destroy();
     Webflow.ready();
     Webflow.require('ix2').init();
     document.dispatchEvent(new Event('readystatechange'));
-    requestAnimationFrame(function() {
-      Webflow.require('ix2').init();
-      document.dispatchEvent(new Event('readystatechange'));
-    });
   }
 });
 
