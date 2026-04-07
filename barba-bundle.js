@@ -1136,6 +1136,7 @@ function initFestivalHover() {
     });
 
     link.addEventListener('mouseleave', function() {
+      console.log('[DIAG] mouseleave #' + id);
       gsap.to(polaroid, {
         autoAlpha: 0,
         duration: 0.25,
