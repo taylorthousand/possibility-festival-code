@@ -1098,7 +1098,7 @@ function initFestivalHover() {
   var activePolaroid = null;
 
   nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)').forEach(function(p) {
-    gsap.set(p, { display: 'block', position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
+    gsap.set(p, { display: 'block', position: 'fixed', left: 0, top: 0, right: 'auto', bottom: 'auto', autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
   });
 
   window.addEventListener('mousemove', function(e) {
