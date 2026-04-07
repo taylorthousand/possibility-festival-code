@@ -1110,8 +1110,8 @@ function initFestivalHover() {
   var polaroids = nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)');
   if (polaroids.length) {
     var BASE_X = 3, BASE_Y = 3, BASE_BLUR = 5;
-    var SHIFT = 0.8;       // px of shadow shift per degree of rotateY
-    var BLUR_EXTRA = 0.3;  // extra blur px per degree of rotation
+    var SHIFT = 0.15;      // px of shadow shift per degree of rotateY
+    var BLUR_EXTRA = 0.1;  // extra blur px per degree of rotation
 
     function updateShadows() {
       polaroids.forEach(function(p) {
