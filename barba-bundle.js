@@ -184,31 +184,35 @@ function runPageOnceAnimation(next) {
     loadTl.to(hero, { padding: '.75rem', duration: 0.4, ease: 'power2.inOut' });
     heroLoadFired = true;
   }
-  console.log('[DIAG] fonts.status at preloader SplitText:', document.fonts.status);
-  loadHeadings.forEach(function(heading) {
-    var splitType = heading.dataset.splitReveal || 'words';
-    var slow = heading.hasAttribute('data-split-slow');
-    var cfg = splitRevealConfig[splitType] || splitRevealConfig.words;
-    var typesToSplit = splitType === 'lines' ? 'lines' :
-      splitType === 'words' ? 'lines, words' : 'lines, words, chars';
+  if (loadHeadings.length) {
+    // Defer SplitText until the reveal moment so fonts have time to load.
+    // The preloader runs ~3s before this point — fonts are loaded in nearly all cases.
+    loadTl.call(function() {
+      loadHeadings.forEach(function(heading) {
+        var splitType = heading.dataset.splitReveal || 'words';
+        var slow = heading.hasAttribute('data-split-slow');
+        var cfg = splitRevealConfig[splitType] || splitRevealConfig.words;
+        var typesToSplit = splitType === 'lines' ? 'lines' :
+          splitType === 'words' ? 'lines, words' : 'lines, words, chars';
 
-    SplitText.create(heading, {
-      type: typesToSplit, mask: 'lines',
-      linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
-      onSplit: function(instance) {
-        var targets = instance[splitType];
-        gsap.set(heading, { autoAlpha: 1 });
-        gsap.set(targets, { yPercent: 110 });
-        loadTl.to(targets, {
-          yPercent: 0,
-          duration: slow ? cfg.duration * 2 : cfg.duration,
-          stagger: slow ? cfg.stagger * 2 : cfg.stagger,
-          ease: 'expo.out'
-        }, 'hideContent+=0.5');
-      }
-    });
-  });
-  if (loadHeadings.length) loadRevealFired = true;
+        SplitText.create(heading, {
+          type: typesToSplit, mask: 'lines',
+          linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
+          onSplit: function(instance) {
+            var targets = instance[splitType];
+            gsap.set(heading, { autoAlpha: 1 });
+            gsap.from(targets, {
+              yPercent: 110,
+              duration: slow ? cfg.duration * 2 : cfg.duration,
+              stagger: slow ? cfg.stagger * 2 : cfg.stagger,
+              ease: 'expo.out'
+            });
+          }
+        });
+      });
+    }, null, 'hideContent+=0.5');
+    loadRevealFired = true;
+  }
 
   // DrawSVG sparks — draw inside-to-outside during logo reveal
   var sparkWrap = wrap.querySelector('[data-load-sparks]');
