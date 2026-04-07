@@ -344,6 +344,7 @@ function runPageEnterAnimation(next) {
 // BARBA HOOKS + INIT
 
 barba.hooks.beforeEnter(function(data) {
+  console.log('[DIAG] beforeEnter fired');
   var footer = document.querySelector('footer');
   if (footer) gsap.set(footer, { autoAlpha: 0 });
   gsap.set(data.next.container, { position: "fixed", top: 0, left: 0, right: 0 });
