@@ -1098,7 +1098,7 @@ function initFestivalHover() {
   var activePolaroid = null;
 
   nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)').forEach(function(p) {
-    gsap.set(p, { position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
+    gsap.set(p, { display: 'block', position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
   });
 
   window.addEventListener('mousemove', function(e) {
@@ -1123,7 +1123,6 @@ function initFestivalHover() {
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
 
     link.addEventListener('mouseenter', function() {
-      console.log('[DIAG] mouseenter #' + id, 'polaroid:', polaroid, 'computed:', window.getComputedStyle(polaroid).cssText);
       activePolaroid = polaroid;
       gsap.set(polaroid, { x: mouseX + OFFSET_X, y: mouseY + OFFSET_Y });
       gsap.to(polaroid, { autoAlpha: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });

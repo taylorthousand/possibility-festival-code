@@ -24,7 +24,7 @@
     var activePolaroid = null;
 
     document.querySelectorAll('[data-festival]:not(.festivals_item-link)').forEach(function (p) {
-      gsap.set(p, { position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
+      gsap.set(p, { display: 'block', position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
     });
 
     window.addEventListener('mousemove', function (e) {
