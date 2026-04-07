@@ -1092,6 +1092,7 @@ function initDonationHeaderScroll() {
 // CONTAINER: FESTIVAL HOVER
 
 function initFestivalHover() {
+  // Heading skew on list hover
   nextPage.querySelectorAll('.festivals_item-link[data-festival]').forEach(function(link) {
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
     if (!heading) return;
@@ -1104,6 +1105,26 @@ function initFestivalHover() {
       gsap.to(heading, { skewX: 0, duration: 0.2, ease: 'power2.out', overwrite: true });
     });
   });
+
+  // Dynamic shadow on polaroid rotation
+  var polaroids = nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)');
+  if (polaroids.length) {
+    var BASE_X = 3, BASE_Y = 3, BASE_BLUR = 5;
+    var SHIFT = 0.8;       // px of shadow shift per degree of rotateY
+    var BLUR_EXTRA = 0.3;  // extra blur px per degree of rotation
+
+    function updateShadows() {
+      polaroids.forEach(function(p) {
+        var rotY = gsap.getProperty(p, 'rotateY') || 0;
+        var offsetX = BASE_X - rotY * SHIFT;
+        var blur = BASE_BLUR + Math.abs(rotY) * BLUR_EXTRA;
+        p.style.boxShadow = offsetX + 'px ' + BASE_Y + 'px ' + blur + 'px 0px rgba(0,0,0,0.35)';
+      });
+    }
+
+    gsap.ticker.add(updateShadows);
+    containerTickerFns.push(updateShadows);
+  }
 }
 
 // CONTAINER: BACKGROUND SHIFT
