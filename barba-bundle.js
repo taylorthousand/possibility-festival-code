@@ -1099,7 +1099,7 @@ function initFestivalHover() {
   var mouseX = 0, mouseY = 0;
   var activePolaroid = null;
 
-  nextPage.querySelectorAll('.polaroid.vertical.is-festival').forEach(function(p) {
+  nextPage.querySelectorAll('[data-festival]:not(.festivals_item-link)').forEach(function(p) {
     gsap.set(p, { position: 'fixed', left: 0, top: 0, autoAlpha: 0, pointerEvents: 'none', zIndex: 999 });
   });
 
@@ -1119,7 +1119,7 @@ function initFestivalHover() {
 
   nextPage.querySelectorAll('.festivals_item-link[data-festival]').forEach(function(link) {
     var id = link.getAttribute('data-festival');
-    var polaroid = nextPage.querySelector('.polaroid.vertical.is-festival[data-festival="' + id + '"]');
+    var polaroid = nextPage.querySelector('[data-festival="' + id + '"]:not(.festivals_item-link)');
     if (!polaroid) return;
 
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
