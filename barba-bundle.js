@@ -1094,6 +1094,7 @@ function initDonationHeaderScroll() {
 function initFestivalHover() {
   console.log('[DIAG] initFestivalHover called');
   var signal = containerAbort ? containerAbort.signal : undefined;
+  console.log('[DIAG] signal aborted?', signal ? signal.aborted : 'no signal');
   var OFFSET_X = 20;
   var OFFSET_Y = 20;
   var mouseX = 0, mouseY = 0;
