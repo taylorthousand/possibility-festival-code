@@ -536,7 +536,7 @@ function createMenuButtonRevealST() {
       menuButton_el.style.pointerEvents = 'auto';
     },
     onLeaveBack: function() {
-      revealTween.timeScale(1.5).reverse();
+      revealTween.timeScale(2).reverse();
       if (menuButton_navComponent) menuButton_navComponent.style.pointerEvents = 'none';
       menuButton_el.style.pointerEvents = 'none';
     }
