@@ -370,7 +370,12 @@ barba.hooks.afterEnter(function(data) {
   initAfterEnterFunctions(data.next.container);
   if (hasLenis) { lenis.resize(); lenis.start(); }
   if (hasScrollTrigger) ScrollTrigger.refresh();
-  if (window.Webflow) { Webflow.destroy(); Webflow.ready(); Webflow.require('ix2').init(); }
+  if (window.Webflow) {
+    Webflow.destroy();
+    Webflow.ready();
+    Webflow.require('ix2').init();
+    document.dispatchEvent(new Event('readystatechange'));
+  }
 });
 
 if (typeof barbaPrefetch !== 'undefined') barba.use(barbaPrefetch);
