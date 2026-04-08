@@ -28,6 +28,12 @@ var has = function(s) { return !!nextPage.querySelector(s); };
 var staggerDefault = 0.05;
 var durationDefault = 0.6;
 
+// Immediately hide preloader if already seen this session
+(function() {
+  var w = document.querySelector('[data-load-wrap]');
+  if (w && sessionStorage.getItem('pfest-preloader-seen')) w.style.display = 'none';
+})();
+
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
 gsap.defaults({ ease: "osmo", duration: durationDefault });
 
@@ -45,6 +51,7 @@ function initOnceFunctions() {
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
   initMenuButton();
+  initNavLinkSkew();
   initNavLogoScroll();
 }
 
@@ -350,6 +357,12 @@ barba.hooks.beforeEnter(function(data) {
   if (lenis && typeof lenis.stop === "function") lenis.stop();
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
+  // On re-entry, make load headings visible before the transition reveals the page
+  if (loadRevealFired) {
+    data.next.container.querySelectorAll('[data-split-trigger="load"]').forEach(function(el) {
+      gsap.set(el, { autoAlpha: 1 });
+    });
+  }
 });
 
 barba.hooks.afterLeave(function() {
@@ -379,6 +392,11 @@ barba.hooks.afterEnter(function(data) {
     Webflow.ready();
     Webflow.require('ix2').init();
     document.dispatchEvent(new Event('readystatechange'));
+  }
+  // Hero end-state must be set after IX2 reinit (which can override inline styles)
+  if (heroLoadFired) {
+    var hero = data.next.container.querySelector('.section_hero');
+    if (hero) hero.style.padding = '0.75rem';
   }
 });
 
@@ -567,6 +585,19 @@ function createMenuButtonRevealST() {
 
 function refreshMenuButtonReveal() { createMenuButtonRevealST(); }
 
+// WRAPPER: NAV LINK SKEW
+
+function initNavLinkSkew() {
+  document.querySelectorAll('.menu-linkblock').forEach(function(link) {
+    link.addEventListener('mouseenter', function() {
+      gsap.to(link, { skewX: -10, duration: 0.3, ease: 'power2.out', overwrite: true });
+    });
+    link.addEventListener('mouseleave', function() {
+      gsap.to(link, { skewX: 0, duration: 0.2, ease: 'power2.out', overwrite: true });
+    });
+  });
+}
+
 // WRAPPER: NAV LOGO SCROLL
 
 function initNavLogoScroll() {
@@ -600,10 +631,13 @@ function refreshNavLogoScroll() { createNavLogoScrollST(); }
 // CONTAINER: HERO LOAD
 
 function initHeroLoad() {
-  if (heroLoadFired) return;
-  heroLoadFired = true;
   var hero = nextPage.querySelector('.section_hero');
   if (!hero) return;
+  if (heroLoadFired) {
+    hero.style.padding = '0.75rem';
+    return;
+  }
+  heroLoadFired = true;
   var tl = gsap.timeline();
   tl.set(hero, { padding: '0rem' })
     .to(hero, { padding: '1.25rem', duration: 0.6, ease: 'power2.out' })
@@ -678,6 +712,11 @@ function doTextReveal() {
     var type = heading.dataset.splitReveal || 'words';
     var slow = heading.hasAttribute('data-split-slow');
     var trigger = heading.dataset.splitTrigger || 'scroll';
+    // Re-entry: load headings don't need splitting — just show them
+    if (trigger === 'load' && loadRevealFired) {
+      gsap.set(heading, { autoAlpha: 1 });
+      return;
+    }
     var typesToSplit = type === 'lines' ? ['lines'] : type === 'words' ? ['lines', 'words'] : ['lines', 'words', 'chars'];
 
     SplitText.create(heading, {
@@ -979,14 +1018,10 @@ function initDonationSpotlight() {
       baseX = ((r.left+r.width/2)/window.innerWidth)*100;
       baseY = ((r.top+r.height/2)/window.innerHeight)*100 + donateSpotCfg.offsetY;
     }
-    function setPos(tx,ty) {
-      sp.x=tx; sp.y=ty;
-      overlay.style.setProperty('--spotlight-x',tx+'%'); overlay.style.setProperty('--spotlight-y',ty+'%');
-    }
     function applyPos() {
       var ox = isHov ? (lmX-baseX)*donateSpotCfg.damping : frX;
       var oy = isHov ? (lmY-baseY)*donateSpotCfg.damping : frY;
-      setPos(baseX+ox,baseY+oy);
+      animTo(baseX+ox,baseY+oy);
     }
     updBase(); applyPos();
 

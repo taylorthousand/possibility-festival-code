@@ -6,6 +6,15 @@
 
 
 /* -------------------------------------------
+   GLOBAL — overscroll
+   ------------------------------------------- */
+
+html {
+  overscroll-behavior: none;
+}
+
+
+/* -------------------------------------------
    SPOTLIGHT — fog overlay + beam (home page)
    ------------------------------------------- */
 
@@ -113,4 +122,29 @@
     transparent 70%
   );
   transform: rotate(var(--spotlight-rotation));
+}
+
+
+/* -------------------------------------------
+   CAROUSEL — pin sub-pixel gap fix
+   Lenis smooth scroll produces fractional scroll
+   positions, causing ScrollTrigger's pin to land
+   at e.g. top: 0.4px instead of 0. Force flush.
+   ------------------------------------------- */
+
+.pin-spacer > [data-carousel="polaroid"] {
+  top: 0px !important;
+}
+
+
+/* -------------------------------------------
+   NAV LINK SKEW — faux-italic hover on menu links
+   ------------------------------------------- */
+
+.menu-linkblock {
+  transition: font-variation-settings 0.3s ease;
+}
+
+.menu-linkblock:hover {
+  font-variation-settings: 'slnt' -12;
 }
