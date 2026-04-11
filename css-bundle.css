@@ -6,6 +6,90 @@
 
 
 /* -------------------------------------------
+   HEADING CLAMP — Fluid typography (992px → 1920px)
+   Design reference: 1440px
+   ------------------------------------------- */
+
+/* --- Base Heading Tags --- */
+
+h1,
+.heading-style-h1 {
+  font-size: clamp(77px, 7.78vw, 149px);
+}
+
+h2,
+.heading-style-h2 {
+  font-size: clamp(63px, 6.39vw, 122px);
+}
+
+h3,
+.heading-style-h3 {
+  font-size: clamp(56px, 5.69vw, 109px);
+}
+
+h4,
+.heading-style-h4 {
+  font-size: clamp(37px, 3.75vw, 72px);
+}
+
+h5,
+.heading-style-h5 {
+  font-size: clamp(22px, 2.22vw, 43px);
+}
+
+h6,
+.heading-style-h6 {
+  font-size: clamp(17px, 1.67vw, 32px);
+}
+
+/* --- Custom Heading Style Classes --- */
+
+.heading-style-h1-110 {
+  font-size: clamp(76px, 7.64vw, 147px);
+}
+
+.heading-style-h1-125 {
+  font-size: clamp(86px, 8.68vw, 167px);
+}
+
+.heading-style-h1-132 {
+  font-size: clamp(91px, 9.17vw, 176px);
+}
+
+.heading-style-h2-89 {
+  font-size: clamp(61px, 6.18vw, 119px);
+}
+
+.heading-style-h3-78 {
+  font-size: clamp(54px, 5.42vw, 104px);
+}
+
+.heading-style-74 {
+  font-size: clamp(51px, 5.14vw, 99px);
+}
+
+.heading-style-64 {
+  font-size: clamp(44px, 4.44vw, 85px);
+}
+
+.heading-style-59 {
+  font-size: clamp(41px, 4.10vw, 79px);
+}
+
+.heading-style-h4-56 {
+  font-size: clamp(39px, 3.89vw, 75px);
+}
+
+.heading-style-h4-52 {
+  font-size: clamp(36px, 3.61vw, 69px);
+}
+
+.heading-style-39 {
+  font-size: clamp(27px, 2.71vw, 52px);
+}
+
+
+/* -------------------------------------------
    GLOBAL — overscroll
    ------------------------------------------- */
 
@@ -70,6 +154,12 @@ html {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+  [data-spotlight] .spotlight-overlay {
+    --spotlight-ry: 25%;
+  }
 }
 
 
@@ -147,4 +237,26 @@ html {
 
 .menu-linkblock:hover {
   font-variation-settings: 'slnt' -12;
+}
+
+
+/* -------------------------------------------
+   BADLY CALLOUT — hide below 1250px
+   ------------------------------------------- */
+
+@media (max-width: 1239px) {
+  .badly-callout {
+    display: none;
+  }
+}
+
+
+/* -------------------------------------------
+   CHICAGO CALLOUT — hide below 1130px
+   ------------------------------------------- */
+
+@media (max-width: 1129px) {
+  .chicago-callout {
+    display: none;
+  }
 }

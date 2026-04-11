@@ -63,35 +63,32 @@
         baseY = ((r.top + r.height / 2) / window.innerHeight) * 100 + donateSpotCfg.offsetY;
       }
 
-      function setPos(tx, ty) {
-        sp.x = tx; sp.y = ty;
-        overlay.style.setProperty('--spotlight-x', tx + '%');
-        overlay.style.setProperty('--spotlight-y', ty + '%');
-      }
-
       function applyPos() {
         var ox = isHov ? (lmX - baseX) * donateSpotCfg.damping : frX;
         var oy = isHov ? (lmY - baseY) * donateSpotCfg.damping : frY;
-        setPos(baseX + ox, baseY + oy);
+        animTo(baseX + ox, baseY + oy);
       }
 
       updBase();
       applyPos();
 
-      section.addEventListener('mousemove', function (e) {
-        isHov = true;
-        lmX = (e.clientX / window.innerWidth) * 100;
-        lmY = (e.clientY / window.innerHeight) * 100;
-        var ox = (lmX - baseX) * donateSpotCfg.damping;
-        var oy = (lmY - baseY) * donateSpotCfg.damping;
-        animTo(baseX + ox, baseY + oy);
-      });
+      var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
+      if (!isTablet) {
+        section.addEventListener('mousemove', function (e) {
+          isHov = true;
+          lmX = (e.clientX / window.innerWidth) * 100;
+          lmY = (e.clientY / window.innerHeight) * 100;
+          var ox = (lmX - baseX) * donateSpotCfg.damping;
+          var oy = (lmY - baseY) * donateSpotCfg.damping;
+          animTo(baseX + ox, baseY + oy);
+        });
 
-      section.addEventListener('mouseleave', function () {
-        frX = (lmX - baseX) * donateSpotCfg.damping;
-        frY = (lmY - baseY) * donateSpotCfg.damping;
-        isHov = false;
-      });
+        section.addEventListener('mouseleave', function () {
+          frX = (lmX - baseX) * donateSpotCfg.damping;
+          frY = (lmY - baseY) * donateSpotCfg.damping;
+          isHov = false;
+        });
+      }
 
       ScrollTrigger.create({
         trigger: section,

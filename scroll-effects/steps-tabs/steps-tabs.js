@@ -78,10 +78,19 @@
       var menuRect = tabMenu.getBoundingClientRect();
       var tabRect = tab.getBoundingClientRect();
 
-      var targetLeft = tabRect.left - menuRect.left - 3;
-      var targetTop = tabRect.top - menuRect.top - 3;
-      var targetWidth = tabRect.width + 2;
-      var targetHeight = tabRect.height + 2;
+      var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
+      var targetLeft, targetTop, targetWidth, targetHeight;
+      if (isTablet) {
+        targetWidth = Math.round(tabRect.width * 1.02);
+        targetHeight = Math.round(tabRect.height * 1.03);
+        targetLeft = Math.round(tabRect.left - menuRect.left - tabRect.width * 0.02);
+        targetTop = Math.round(tabRect.top - menuRect.top - tabRect.height * 0.07);
+      } else {
+        targetLeft = tabRect.left - menuRect.left - 3;
+        targetTop = tabRect.top - menuRect.top - 3;
+        targetWidth = tabRect.width + 2;
+        targetHeight = tabRect.height + 2;
+      }
 
       /* Kill any in-progress tween */
       if (activeTween) {

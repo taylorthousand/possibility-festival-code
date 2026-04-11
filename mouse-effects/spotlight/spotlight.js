@@ -58,8 +58,8 @@ const spotlightConfig = {
 
   // Inner column
   innerWidthRatio: 0.5,   // fraction of outer tangent span
-  innerIntensity: 0.8,    // peak opacity
-  innerSoftEdge: 0.325,   // soft edge multiplier
+  innerIntensity: 0.55,   // peak opacity
+  innerSoftEdge: 0.374,   // soft edge multiplier
   innerBlur: 10,          // px
 
   // Mask (length fade along beam axis)
@@ -226,6 +226,9 @@ function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffse
 
 /* --- Init --- */
 function initSpotlight() {
+  var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
+  spotlightConfig.ellipseRY = isTablet ? 25 : 40;
+
   const sections = document.querySelectorAll('[data-spotlight]');
 
   sections.forEach(section => {
@@ -271,8 +274,8 @@ function initSpotlight() {
     function getMouseOffset() {
       if (!isHovering) return { x: frozenOffsetX, y: frozenOffsetY };
       return {
-        x: (lastMouseX - baseX) * spotlightConfig.damping,
-        y: (lastMouseY - baseY) * spotlightConfig.damping
+        x: (lastMouseX - 50) * spotlightConfig.damping,
+        y: (lastMouseY - 50) * spotlightConfig.damping
       };
     }
 
@@ -302,38 +305,41 @@ function initSpotlight() {
       animateTo(spotX, spotY, offset.x, offset.y);
     }
 
-    // --- Helper: recalculate base from target's viewport position ---
+    // --- Helper: recalculate base from target's position within overlay ---
     function updateBaseFromTarget() {
       if (!hasTarget) return;
       const rect = target.getBoundingClientRect();
-      baseX = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
-      baseY = ((rect.top + rect.height / 2) / window.innerHeight) * 100;
+      const oRect = overlay.getBoundingClientRect();
+      baseX = ((rect.left + rect.width / 2 - oRect.left) / oRect.width) * 100;
+      baseY = ((rect.top + rect.height / 2 - oRect.top) / oRect.height) * 100;
     }
 
     // --- Set position immediately so it's correct from the first frame ---
     updateBaseFromTarget();
     applyPosition();
 
-    // --- Mouse events ---
-    section.addEventListener('mousemove', (e) => {
-      isHovering = true;
-      lastMouseX = (e.clientX / window.innerWidth) * 100;
-      lastMouseY = (e.clientY / window.innerHeight) * 100;
+    // --- Mouse events (disabled on tablet — no parallax on touch) ---
+    if (!isTablet) {
+      section.addEventListener('mousemove', (e) => {
+        isHovering = true;
+        lastMouseX = (e.clientX / window.innerWidth) * 100;
+        lastMouseY = (e.clientY / window.innerHeight) * 100;
 
-      const offsetX = (lastMouseX - baseX) * spotlightConfig.damping;
-      const offsetY = (lastMouseY - baseY) * spotlightConfig.damping;
-      const spotX = baseX + offsetX;
-      const spotY = baseY + offsetY;
+        const offsetX = (lastMouseX - 50) * spotlightConfig.damping;
+        const offsetY = (lastMouseY - 50) * spotlightConfig.damping;
+        const spotX = baseX + offsetX;
+        const spotY = baseY + offsetY;
 
-      animateTo(spotX, spotY, offsetX, offsetY);
-    });
+        animateTo(spotX, spotY, offsetX, offsetY);
+      });
 
-    section.addEventListener('mouseleave', () => {
-      // Freeze the current offset so the spotlight holds position
-      frozenOffsetX = (lastMouseX - baseX) * spotlightConfig.damping;
-      frozenOffsetY = (lastMouseY - baseY) * spotlightConfig.damping;
-      isHovering = false;
-    });
+      section.addEventListener('mouseleave', () => {
+        // Freeze the current offset so the spotlight holds position
+        frozenOffsetX = (lastMouseX - 50) * spotlightConfig.damping;
+        frozenOffsetY = (lastMouseY - 50) * spotlightConfig.damping;
+        isHovering = false;
+      });
+    }
 
     // --- ScrollTrigger 1: position tracking (entire time section is in viewport) ---
     ScrollTrigger.create({

@@ -30,6 +30,14 @@ const underlineDefaults = {
   offset: '1.2rem'
 };
 
+function getUnderlineSizes() {
+  var w = window.innerWidth;
+  if (w < 480) return { svgHeight: '0.35rem', offset: '0.5rem', strokeWidth: 2 };
+  if (w < 768) return { svgHeight: '0.45rem', offset: '0.65rem', strokeWidth: 2 };
+  if (w < 992) return { svgHeight: '0.55rem', offset: '0.85rem', strokeWidth: 2.5 };
+  return { svgHeight: underlineDefaults.svgHeight, offset: underlineDefaults.offset, strokeWidth: underlineDefaults.strokeWidth };
+}
+
 // Original SVG viewBox width for the hand-drawn path
 const SVG_VIEWBOX_W = 439;
 const SVG_VIEWBOX_H = 10;
@@ -40,11 +48,13 @@ function initUnderlineDraw() {
 
   const spans = document.querySelectorAll('[data-underline]');
 
+  const sizes = getUnderlineSizes();
+
   spans.forEach(span => {
     const duration = parseFloat(span.getAttribute('data-underline-duration')) || underlineDefaults.duration;
     const delay = parseFloat(span.getAttribute('data-underline-delay')) || underlineDefaults.delay;
     const color = span.getAttribute('data-underline-color') || underlineDefaults.color;
-    const offset = span.getAttribute('data-underline-offset') || underlineDefaults.offset;
+    const offset = span.getAttribute('data-underline-offset') || sizes.offset;
 
     // Ensure the span is a positioning context
     span.style.position = 'relative';
@@ -59,7 +69,7 @@ function initUnderlineDraw() {
       bottom: -${offset};
       left: 0;
       width: 100%;
-      height: ${underlineDefaults.svgHeight};
+      height: ${sizes.svgHeight};
       overflow: visible;
       pointer-events: none;
     `;
@@ -67,7 +77,7 @@ function initUnderlineDraw() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', UNDERLINE_PATH);
     path.setAttribute('stroke', color);
-    path.setAttribute('stroke-width', underlineDefaults.strokeWidth);
+    path.setAttribute('stroke-width', sizes.strokeWidth);
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('fill', 'none');
 

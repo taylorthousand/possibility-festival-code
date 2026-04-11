@@ -71,6 +71,25 @@
     waverBlendDuration: 0.06, // scroll progress over which waver fades out
   };
 
+  /* ---------- RESPONSIVE HELPERS ---------- */
+  // Value increases as viewport narrows (linear interpolation between two widths)
+  function inverseScale(atWide, atNarrow, wideVW, narrowVW) {
+    var t = (window.innerWidth - narrowVW) / (wideVW - narrowVW);
+    return atNarrow + t * (atWide - atNarrow);
+  }
+
+  /* ---------- RESPONSIVE OVERRIDES ---------- */
+  var tabletOverrides = {
+    radiusX: inverseScale(44, 55, 992, 768),
+    radiusY: inverseScale(21, 26, 992, 768),
+    orbitOffsetY: 2,
+  };
+  var mobileOverrides = {
+    // Properties that differ at mobile (< 768px) — fill in after visual testing
+  };
+  if (window.innerWidth < 992) Object.assign(config, tabletOverrides);
+  if (window.innerWidth < 768) Object.assign(config, mobileOverrides);
+
   const TOTAL = 7;
   const TWO_PI = Math.PI * 2;
   const BACK_ANGLE = -Math.PI / 2;   // 12 o'clock = back of orbit
@@ -235,7 +254,7 @@
   /* ---------- INIT ---------- */
 
   function init() {
-    if (window.innerWidth < 992) return;
+    // if (window.innerWidth < 992) return; // TEMP: disabled for mobile testing
 
     var section = document.querySelector('[data-carousel="polaroid"]');
     if (!section) return;

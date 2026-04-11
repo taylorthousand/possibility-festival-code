@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const layoutText = new SplitType(".steps_conclusion_text", { types: "words" });
   const layoutTL = gsap.timeline();
 
-  let startValue = isMobile() ? "top 35%" : "top center";
-  let endValue = isMobile() ? "bottom 90%" : "bottom center";
+  let startValue = isMobile() ? "top 65%" : "top 80%";
+  let endValue = isMobile() ? "bottom 120%" : "bottom 80%";
 
   layoutTL.fromTo(layoutText.words,
     { opacity: 0.25, color: "#888888" },
