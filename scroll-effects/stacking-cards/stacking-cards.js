@@ -64,9 +64,22 @@ function initStackingCards() {
       return gsap.getProperty(card, 'rotation');
     });
 
+    // Measure the push distance needed for each card to clear the section's
+    // bottom edge. Done per-card so cards higher in the section get more push,
+    // guaranteeing they clear on any viewport (portrait tablets, short screens).
+    // Must run BEFORE gsap.set() so we read the card's true Webflow position.
+    var sectionBottom = section.getBoundingClientRect().bottom;
+    var pushDistances = cards.map(function(card) {
+      var cardTop = card.getBoundingClientRect().top;
+      var distance = sectionBottom - cardTop + card.offsetHeight * 0.1;
+      // Fallback to configured startY if measurement is unusable
+      // (e.g. card is display:none or not yet laid out at init time)
+      return distance > 0 ? distance : stackingCardsCfg.startY;
+    });
+
     // Hide all cards at their start position immediately
-    cards.forEach(function(card) {
-      gsap.set(card, { y: stackingCardsCfg.startY, rotation: stackingCardsCfg.startRotation });
+    cards.forEach(function(card, index) {
+      gsap.set(card, { y: pushDistances[index], rotation: stackingCardsCfg.startRotation });
     });
 
     // Each card gets 1 unit of entrance + 0.5 units of gap before the next
