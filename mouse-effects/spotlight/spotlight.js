@@ -226,6 +226,7 @@ function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffse
 
 /* --- Init --- */
 function initSpotlight() {
+  if (window.innerWidth <= 767) return;
   var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
   spotlightConfig.ellipseRY = isTablet ? 25 : 40;
 

@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const hero = document.querySelector('.section_hero');
   if (!hero) return;
 
+  // Mobile landscape and below: skip the padding tween; text reveal runs solo.
+  if (window.innerWidth <= 767) return;
+
   const tl = gsap.timeline();
 
   tl.set(hero, { padding: '0rem' })

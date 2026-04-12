@@ -2,6 +2,7 @@
 // Requires GSAP + ScrollTrigger
 
 window.addEventListener("load", () => {
+  if (window.innerWidth < 992) return;
   const section =
     document.querySelector(".section_register-cta") ||
     document.querySelector(".section_home-cta") ||

@@ -23,6 +23,10 @@ var reducedMotion = rmMQ.matches;
 rmMQ.addEventListener?.("change", function(e) { reducedMotion = e.matches; });
 rmMQ.addListener?.(function(e) { reducedMotion = e.matches; });
 
+// Hero padding animation is too busy paired with the text reveal on small screens.
+// Mobile landscape and below: keep the text reveal, skip the padding tween entirely.
+function shouldAnimateHeroLoad() { return window.innerWidth > 767; }
+
 var has = function(s) { return !!nextPage.querySelector(s); };
 
 var staggerDefault = 0.05;
@@ -90,6 +94,7 @@ function initAfterEnterFunctions(next) {
   if (has('.section_solution') && has('[data-carousel="polaroid"]')) initSectionSnap();
   if (has('.steps_tabs-menu')) initStepsTabs();
   if (has('.steps_conclusion_text')) initTextColorReveal();
+  if (has('.steps_conclusion_text_mobile')) initTextColorRevealMobile();
   if (has('[data-underline]')) initUnderlineDraw();
   if (has('[data-modal]')) initModal();
 
@@ -131,18 +136,16 @@ function runPageOnceAnimation(next) {
   // No loader element or already seen this session — skip
   if (!wrap || sessionStorage.getItem(preloaderCfg.sessionKey)) {
     if (wrap) wrap.style.display = 'none';
-    var tl = gsap.timeline();
-    tl.call(function() { resetPage(next); }, null, 0);
-    return tl;
+    resetPage(next);
+    return Promise.resolve();
   }
 
   // Reduced motion — hide immediately
   if (reducedMotion) {
     wrap.style.display = 'none';
     sessionStorage.setItem(preloaderCfg.sessionKey, '1');
-    var tl = gsap.timeline();
-    tl.call(function() { resetPage(next); }, null, 0);
-    return tl;
+    resetPage(next);
+    return Promise.resolve();
   }
 
   // --- Loader sequence ---
@@ -188,7 +191,7 @@ function runPageOnceAnimation(next) {
   // CSS hides load headings: [data-split-trigger="load"] { opacity: 0; }
   var hero = next.querySelector('.section_hero');
   var loadHeadings = Array.from(next.querySelectorAll('[data-split-trigger="load"]'));
-  if (hero) {
+  if (hero && shouldAnimateHeroLoad()) {
     loadTl.set(hero, { padding: '0rem' }, 0);
     loadTl.to(hero, { padding: '1.25rem', duration: 0.6, ease: 'power2.out' }, 'hideContent+=0.5');
     loadTl.to(hero, { padding: '.75rem', duration: 0.4, ease: 'power2.inOut' });
@@ -400,13 +403,24 @@ barba.hooks.afterEnter(function(data) {
     document.dispatchEvent(new Event('readystatechange'));
   }
   // Hero end-state must be set after IX2 reinit (which can override inline styles)
-  if (heroLoadFired) {
+  if (heroLoadFired && shouldAnimateHeroLoad()) {
     var hero = data.next.container.querySelector('.section_hero');
     if (hero) hero.style.padding = '0.75rem';
   }
 });
 
 if (typeof barbaPrefetch !== 'undefined') barba.use(barbaPrefetch);
+
+// Safety refresh after all resources (images, CSS) finish loading.
+// Double-rAF ensures the footer-loaded CSS bundle is painted before re-measuring.
+window.addEventListener('load', function() {
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      if (hasScrollTrigger) ScrollTrigger.refresh();
+      if (hasLenis && lenis) lenis.resize();
+    });
+  });
+});
 
 barba.init({
   debug: true,
@@ -640,6 +654,7 @@ function refreshNavLogoScroll() { createNavLogoScrollST(); }
 function initHeroLoad() {
   var hero = nextPage.querySelector('.section_hero');
   if (!hero) return;
+  if (!shouldAnimateHeroLoad()) return;
   if (heroLoadFired) {
     hero.style.padding = '0.75rem';
     return;
@@ -956,6 +971,7 @@ function updateBeam(bOut, bIn, spotX, spotY, moX, moY) {
 }
 
 function initSpotlight() {
+  if (window.innerWidth <= 767) return;
   var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
   spotlightCfg.ellipseRY = isTablet ? 25 : 40;
   nextPage.querySelectorAll('[data-spotlight]').forEach(function(section) {
@@ -1012,6 +1028,7 @@ function initSpotlight() {
 var donateSpotCfg = { damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, baseX: 50, baseY: 50, offsetY: -4 };
 
 function initDonationSpotlight() {
+  if (window.innerWidth <= 767) return;
   nextPage.querySelectorAll('[data-spotlight-donate]').forEach(function(section) {
     var overlay = section.querySelector('.spotlight-overlay'); if (!overlay) return;
     var target = section.querySelector('[data-spotlight-target]');
@@ -1220,6 +1237,7 @@ function initGradientEmanate() {
 // CONTAINER: FOOTER REVEAL
 
 function initFooterReveal() {
+  if (window.innerWidth < 992) return;
   var section = nextPage.querySelector('.section_register-cta')
     || nextPage.querySelector('.section_home-cta')
     || nextPage.querySelector('.section_donate-cta');
@@ -1658,6 +1676,23 @@ function initTextColorReveal() {
         trigger: nextPage.querySelector('.section_layout484') || el,
         start: isMobile ? "top 65%" : "top 80%",
         end: isMobile ? "bottom 120%" : "bottom 80%",
+        scrub: 2
+      }
+    }
+  );
+}
+
+function initTextColorRevealMobile() {
+  if (window.innerWidth > 767) return;
+  var el = nextPage.querySelector('.steps_conclusion_text_mobile'); if (!el) return;
+  var layout = new SplitType(el, { types: "words" });
+  gsap.fromTo(layout.words,
+    { opacity: 0.25, color: "#888888" },
+    { opacity: 1, color: "#ffffff", stagger: 0.1,
+      scrollTrigger: {
+        trigger: el,
+        start: "top 75%",
+        end: "bottom 30%",
         scrub: 2
       }
     }

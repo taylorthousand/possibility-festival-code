@@ -30,6 +30,7 @@
   };
 
   function initDonationSpotlight() {
+    if (window.innerWidth <= 767) return;
     document.querySelectorAll('[data-spotlight-donate]').forEach(function (section) {
       var overlay = section.querySelector('.spotlight-overlay');
       if (!overlay) return;
