@@ -27,7 +27,7 @@ var stackingCardsCfg = {
   startRotation: 0,           // rotation at start of entrance (0 = no spin)
   scrubEase: 'none',
   scrollStart: 'top top',
-  pinDuration: '250%',
+  pinDuration: '300%',
   // Bounce
   bounce: true,
   bounceDuration: 0.1,
