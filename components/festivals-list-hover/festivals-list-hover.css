@@ -1,38 +1,46 @@
 /* ===========================================
-   FESTIVALS LIST HOVER - Dim siblings on hover
+   FESTIVALS LIST HOVER / SCROLL ACTIVATE
    ===========================================
-
-   On list hover: dim all headings and hide
-   register tag backgrounds. On item hover:
-   restore heading, go italic, show blue tag.
 
    Structure:
    festivals_list
      └─ festivals_item
-          └─ festivals_item-link
+          └─ festivals_item-link  (has data-festival="name")
                ├─ heading-style-h4-56.is-festivals
                └─ festivals_register-tag
 
-   Only active on desktop (992px+).
+   Polaroids live elsewhere in the DOM but share the
+   data-festival attribute to pair with each link.
+
+   ≥768px (tablet + desktop): hover-driven — list hover
+   dims all headings; hovered item restores + italicizes
+   + turns register tag blue.
+
+   ≤767px (mobile landscape + portrait): scroll-driven —
+   JS toggles .is-list-active on the list and .is-active
+   on the link/polaroid as a virtual 45vh line crosses
+   each item. Same visual result as hover.
    =========================================== */
 
-@media only screen and (min-width: 992px) {
+/* Shared transitions (all viewports) */
+.heading-style-h4-56.is-festivals {
+  transition: color 0.3s ease, font-variation-settings 0.3s ease;
+}
 
-  /* Base transitions */
-  .heading-style-h4-56.is-festivals {
-    transition: color 0.3s ease, font-variation-settings 0.3s ease;
-  }
+.festivals_register-tag {
+  transition: background-color 0.3s ease;
+}
 
-  .festivals_register-tag {
-    transition: background-color 0.3s ease;
-  }
 
-  /* --- List hovered: dim everything --- */
+/* --- Tablet + Desktop: hover-driven (≥768px) --- */
+@media only screen and (min-width: 768px) {
+
+  /* List hovered: dim everything */
   .festivals_list:hover .heading-style-h4-56.is-festivals {
     color: #c4c4c4;
   }
 
-  /* --- Hovered item: restore + enhance --- */
+  /* Hovered item: restore + enhance */
   .festivals_list:hover .festivals_item-link:hover .heading-style-h4-56.is-festivals {
     color: #000000;
     font-variation-settings: 'slnt' -12;
@@ -40,6 +48,49 @@
 
   .festivals_list:hover .festivals_item-link:hover .festivals_register-tag {
     background-color: #2D9EEA;
+  }
+
+}
+
+
+/* --- Mobile: scroll-driven (≤767px) --- */
+/* !important on polaroid state to override any inline styles Webflow
+   interactions may bake in at page load (display:none, opacity:0). */
+@media only screen and (max-width: 767px) {
+
+  /* Polaroid base state — hidden, ready to reveal.
+     display:flex !important overrides any inline display:none that a
+     Webflow mouse interaction writes on mousemove (inline without
+     !important loses to CSS with !important). JS also strips inline
+     display/opacity/transform on init as a first-line defense. */
+  [data-festival]:not(.festivals_item-link) {
+    display: flex !important;
+    opacity: 0 !important;
+    transform: scale(0.9) !important;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    will-change: opacity, transform;
+  }
+
+  /* List active: dim all headings (parallels desktop :hover on list) */
+  .festivals_list.is-list-active .heading-style-h4-56.is-festivals {
+    color: #c4c4c4;
+  }
+
+  /* Active item: restore + italicize */
+  .festivals_item-link.is-active .heading-style-h4-56.is-festivals {
+    color: #000000;
+    font-variation-settings: 'slnt' -12;
+  }
+
+  /* Active item's register tag: turn blue */
+  .festivals_item-link.is-active .festivals_register-tag {
+    background-color: #2D9EEA;
+  }
+
+  /* Active polaroid: reveal with fade + scale */
+  [data-festival].is-active:not(.festivals_item-link) {
+    opacity: 1 !important;
+    transform: scale(1) !important;
   }
 
 }

@@ -11,6 +11,7 @@ var onceFunctionsInitialized = false;
 var isFirstLoad = true;
 var containerAbort = null;
 var containerTickerFns = [];
+var containerObservers = [];
 var hangtagCleanupEls = [];
 var heroLoadFired = false;
 var loadRevealFired = false;
@@ -65,6 +66,8 @@ function initBeforeEnterFunctions(next) {
   containerAbort = new AbortController();
   containerTickerFns.forEach(function(fn) { gsap.ticker.remove(fn); });
   containerTickerFns = [];
+  containerObservers.forEach(function(o) { o.disconnect(); });
+  containerObservers = [];
   hangtagCleanupEls.forEach(function(el) { el.remove(); });
   hangtagCleanupEls = [];
   nextPage = next || document;
@@ -1168,9 +1171,22 @@ function initDonationHeaderScroll() {
   }
 }
 
-// CONTAINER: FESTIVAL HOVER
+// CONTAINER: FESTIVAL HOVER / SCROLL ACTIVATE
+// ≥768px: existing hover + dynamic shadow ticker.
+// ≤767px: scroll-driven activation — no hover listeners, no ticker.
+//   A virtual activation line at 45vh toggles .is-active on whichever
+//   link block it intersects, plus .is-list-active on the list while
+//   any item is in range. Visual state lives in festivals-list-hover.css.
 
 function initFestivalHover() {
+  if (window.innerWidth >= 768) {
+    initFestivalHoverDesktop();
+  } else {
+    initFestivalScrollActivateMobile();
+  }
+}
+
+function initFestivalHoverDesktop() {
   // Heading skew on list hover
   nextPage.querySelectorAll('.festivals_item-link[data-festival]').forEach(function(link) {
     var heading = link.querySelector('.heading-style-h4-56.is-festivals');
@@ -1204,6 +1220,112 @@ function initFestivalHover() {
     gsap.ticker.add(updateShadows);
     containerTickerFns.push(updateShadows);
   }
+}
+
+function initFestivalScrollActivateMobile() {
+  if (!hasScrollTrigger) return;
+
+  var list = nextPage.querySelector('.festivals_list');
+  if (!list) return;
+
+  var links = Array.prototype.slice.call(
+    nextPage.querySelectorAll('.festivals_item-link[data-festival]')
+  );
+  if (!links.length) return;
+
+  // Activation line = 45% down from viewport top.
+  var LINE = '45%';
+
+  // Track the currently active link/polaroid as state. We only ever activate
+  // on enter/enterBack and swap from whatever was previously active — never
+  // deactivate on leave. This makes the last-active item persist through
+  // micro-gaps between triggers (sub-pixel rounding, Lenis fractional scroll,
+  // layout margins) instead of flickering back to base state. List-level
+  // onLeave/onLeaveBack handles the real "exit" cleanup.
+  var activeLink = null;
+  var activePolaroid = null;
+
+  function setActive(link, polaroid) {
+    if (activeLink === link) return;
+    if (activeLink) activeLink.classList.remove('is-active');
+    if (activePolaroid) activePolaroid.classList.remove('is-active');
+    activeLink = link;
+    activePolaroid = polaroid;
+    if (activeLink) activeLink.classList.add('is-active');
+    if (activePolaroid) activePolaroid.classList.add('is-active');
+  }
+
+  function clearActive() {
+    if (activeLink) activeLink.classList.remove('is-active');
+    if (activePolaroid) activePolaroid.classList.remove('is-active');
+    activeLink = null;
+    activePolaroid = null;
+  }
+
+  // List-level trigger: toggle .is-list-active AND tear down the per-item
+  // active state when the line exits the list entirely.
+  ScrollTrigger.create({
+    trigger: list,
+    start: 'top ' + LINE,
+    end: 'bottom ' + LINE,
+    onEnter: function() { list.classList.add('is-list-active'); },
+    onEnterBack: function() { list.classList.add('is-list-active'); },
+    onLeave: function() {
+      list.classList.remove('is-list-active');
+      clearActive();
+    },
+    onLeaveBack: function() {
+      list.classList.remove('is-list-active');
+      clearActive();
+    },
+  });
+
+  // Properties Webflow mouse interactions write inline that we need to strip
+  // to keep polaroids under our CSS's control. Any time one of these shows up
+  // in a polaroid's inline style, we immediately remove it.
+  var STRIP_PROPS = ['display', 'opacity', 'transform', 'visibility', 'pointer-events'];
+
+  function stripInlineProps(el) {
+    for (var i = 0; i < STRIP_PROPS.length; i++) {
+      el.style.removeProperty(STRIP_PROPS[i]);
+    }
+  }
+
+  // Per-item triggers: only activate on enter/enterBack. No leave handlers —
+  // last-active persists until another item takes over or the list exits.
+  links.forEach(function(link) {
+    var name = link.getAttribute('data-festival');
+    var polaroid = nextPage.querySelector(
+      '[data-festival="' + name + '"]:not(.festivals_item-link)'
+    );
+
+    // Strip inline styles at init (first-line defense) AND set up a
+    // MutationObserver that re-strips on every attribute change. This
+    // overrides any Webflow mouse interaction that keeps trying to write
+    // display:none / opacity:0 as the cursor moves over the festival area.
+    // Observer is disconnected on container leave (see containerObservers).
+    if (polaroid) {
+      stripInlineProps(polaroid);
+      var observer = new MutationObserver(function(mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          if (mutations[i].attributeName === 'style') {
+            stripInlineProps(polaroid);
+            break;
+          }
+        }
+      });
+      observer.observe(polaroid, { attributes: true, attributeFilter: ['style'] });
+      containerObservers.push(observer);
+    }
+
+    ScrollTrigger.create({
+      trigger: link,
+      start: 'top ' + LINE,
+      end: 'bottom ' + LINE,
+      onEnter: function() { setActive(link, polaroid); },
+      onEnterBack: function() { setActive(link, polaroid); },
+    });
+  });
 }
 
 // CONTAINER: BACKGROUND SHIFT

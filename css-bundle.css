@@ -241,6 +241,67 @@ html {
 
 
 /* -------------------------------------------
+   FESTIVALS LIST — hover (≥768px) + scroll-activate (≤767px)
+   Register page festivals list. Tablet + desktop use :hover
+   on the list to dim all headings and highlight the one
+   being hovered. Mobile uses JS-toggled classes driven by
+   a virtual 45vh activation line (see festival-hover.js):
+     .festivals_list.is-list-active         — line is inside the list
+     .festivals_item-link.is-active         — line is inside this item
+     [data-festival].is-active              — the matching polaroid
+   ------------------------------------------- */
+
+.heading-style-h4-56.is-festivals {
+  transition: color 0.3s ease, font-variation-settings 0.3s ease;
+}
+
+.festivals_register-tag {
+  transition: background-color 0.3s ease;
+}
+
+@media only screen and (min-width: 768px) {
+  .festivals_list:hover .heading-style-h4-56.is-festivals {
+    color: #c4c4c4;
+  }
+  .festivals_list:hover .festivals_item-link:hover .heading-style-h4-56.is-festivals {
+    color: #000000;
+    font-variation-settings: 'slnt' -12;
+  }
+  .festivals_list:hover .festivals_item-link:hover .festivals_register-tag {
+    background-color: #2D9EEA;
+  }
+}
+
+/* !important on polaroid display/opacity/transform to override inline styles
+   Webflow mouse interactions write on mousemove (inline without !important
+   loses to CSS with !important). JS also strips inline display/opacity/
+   transform from each polaroid on mobile init as first-line defense. */
+@media only screen and (max-width: 767px) {
+  [data-festival]:not(.festivals_item-link) {
+    display: flex !important;
+    opacity: 0 !important;
+    transform: scale(0.9) !important;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    will-change: opacity, transform;
+  }
+  .festivals_list.is-list-active .heading-style-h4-56.is-festivals {
+    color: #c4c4c4;
+  }
+  .festivals_item-link.is-active .heading-style-h4-56.is-festivals {
+    color: #000000;
+    font-variation-settings: 'slnt' -12;
+  }
+  .festivals_item-link.is-active .festivals_register-tag {
+    background-color: #2D9EEA;
+  }
+  [data-festival].is-active:not(.festivals_item-link) {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+  }
+}
+
+
+/* -------------------------------------------
    BADLY CALLOUT — hide below 1250px
    ------------------------------------------- */
 
