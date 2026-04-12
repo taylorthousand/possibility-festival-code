@@ -17,6 +17,7 @@ var heroLoadFired = false;
 var loadRevealFired = false;
 
 var hasLenis = typeof window.Lenis !== "undefined";
+if (window.innerWidth < 768) hasLenis = false;
 var hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 
 var rmMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
