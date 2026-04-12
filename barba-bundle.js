@@ -1401,7 +1401,7 @@ function initParallaxSections() {
 // CONTAINER: POLAROID CAROUSEL
 
 function initPolaroidCarousel() {
-  // if (window.innerWidth < 992) return; // TEMP: disabled for mobile testing
+  if (window.innerWidth < 768) return; // DIAGNOSTIC: isolating mobile scroll jank
   var section = nextPage.querySelector('[data-carousel="polaroid"]');
   if (!section) return;
   var polaroids = gsap.utils.toArray(section.querySelectorAll('.polaroid.vertical.is-carousel'));
