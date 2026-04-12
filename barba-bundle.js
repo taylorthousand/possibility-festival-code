@@ -676,11 +676,13 @@ function initHeroScroll() {
   var hero = nextPage.querySelector('.section_hero');
   var inner = nextPage.querySelector('.hero_inner');
   if (!hero || !inner) return;
-  gsap.set(inner, { outline: '0rem solid #000000' });
-  gsap.to(inner, {
-    scale: 0.7, rotation: 15, opacity: 0.85, outline: '1rem solid #000000', ease: 'none',
-    scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true }
-  });
+  var isMobile = window.innerWidth < 768;
+  var tweenProps = isMobile
+    ? { scale: 0.7, rotation: 15, opacity: 0.85, ease: 'none' }
+    : { scale: 0.7, rotation: 15, opacity: 0.85, outline: '1rem solid #000000', ease: 'none' };
+  if (!isMobile) gsap.set(inner, { outline: '0rem solid #000000' });
+  tweenProps.scrollTrigger = { trigger: hero, start: 'top top', end: 'bottom top', scrub: true };
+  gsap.to(inner, tweenProps);
 }
 
 // CONTAINER: TEXT REVEAL
@@ -1346,6 +1348,7 @@ function initBackgroundShift() {
 var _emanateCfg = { stop1End: 0, stop2End: 0, blackStartEnd: 0, start: 'center 16%', end: 'bottom top' };
 
 function initGradientEmanate() {
+  if (window.innerWidth < 768) return;
   nextPage.querySelectorAll('.section_solution').forEach(function(section) {
     gsap.to(section, {
       '--stop1': _emanateCfg.stop1End + '%',

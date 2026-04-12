@@ -11,6 +11,7 @@ const emanateConfig = {
 };
 
 function initGradientEmanate() {
+  if (window.innerWidth < 768) return;
   const sections = document.querySelectorAll('.section_solution');
 
   sections.forEach(section => {
