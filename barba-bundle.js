@@ -1561,6 +1561,7 @@ function initPolaroidCarousel() {
 // CONTAINER: SCROLL JUMP
 
 function initScrollJump() {
+  if (window.innerWidth < 992) return;
   var carousel = nextPage.querySelector('.section_carousel');
   var solution = nextPage.querySelector('.section_solution');
   if (!carousel || !solution) return;
@@ -1575,7 +1576,7 @@ function initScrollJump() {
 // CONTAINER: SECTION SNAP
 
 function initSectionSnap() {
-  // if (window.innerWidth < 992) return; // TEMP: disabled for mobile testing
+  if (window.innerWidth < 992) return;
   var solution = nextPage.querySelector('.section_solution');
   var carousel = nextPage.querySelector('[data-carousel="polaroid"]');
   if (!solution || !carousel) return;

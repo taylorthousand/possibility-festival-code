@@ -17,7 +17,7 @@
   var SNAP_DELAY = 0;                 // seconds after scroll stops before magnet kicks in
 
   function init() {
-    // if (window.innerWidth < 992) return; // TEMP: disabled for mobile testing
+    if (window.innerWidth < 992) return;
 
     var solution = document.querySelector('.section_solution');
     var carousel = document.querySelector('[data-carousel="polaroid"]');

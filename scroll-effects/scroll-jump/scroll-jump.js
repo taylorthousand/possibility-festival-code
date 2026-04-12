@@ -14,6 +14,8 @@ function goToSection(target) {
 }
 
 function initScrollJump() {
+  if (window.innerWidth < 992) return;
+
   const carousel = document.querySelector('.section_carousel');
   const solution = document.querySelector('.section_solution');
 
