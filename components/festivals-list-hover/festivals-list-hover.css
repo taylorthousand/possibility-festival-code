@@ -66,7 +66,7 @@
   [data-festival]:not(.festivals_item-link) {
     display: flex !important;
     opacity: 0 !important;
-    transform: scale(0.9) !important;
+    transform: scale(0.9) rotate(3deg) !important;
     transition: opacity 0.4s ease, transform 0.4s ease;
     will-change: opacity, transform;
   }
@@ -90,7 +90,7 @@
   /* Active polaroid: reveal with fade + scale */
   [data-festival].is-active:not(.festivals_item-link) {
     opacity: 1 !important;
-    transform: scale(1) !important;
+    transform: scale(1) rotate(3deg) !important;
   }
 
 }
