@@ -937,7 +937,7 @@ function initMomentumHover() {
 var spotlightCfg = {
   damping: 0.04, easeDuration: 0.5, fadeInDuration: 0.6, scrollStart: '10% top',
   beamOriginX: 100, beamOriginY: 37,
-  ellipseRX: 28, ellipseRY: 40, ellipseEdge: 0.85, originWidth: 37,
+  ellipseRX: 28, ellipseRY: 40, ellipseRYMaxRatio: 0.85, ellipseEdge: 0.85, originWidth: 37,
   beamColorR: 255, beamColorG: 248, beamColorB: 230,
   outerSoftEdge: 0.025, outerIntensity: 0.5, outerBlur: 4,
   innerWidthRatio: 0.5, innerIntensity: 0.55, innerSoftEdge: 0.374, innerBlur: 10,
@@ -947,7 +947,7 @@ var spotlightCfg = {
 function computeBeamTangents(srcX, srcY, spotX, spotY) {
   var c = spotlightCfg, vw = window.innerWidth, vh = window.innerHeight;
   var srcPxX = srcX/100*vw, srcPxY = srcY/100*vh, ctrPxX = spotX/100*vw, ctrPxY = spotY/100*vh;
-  var aPx = c.ellipseRX*c.ellipseEdge/100*vw, bPx = c.ellipseRY*c.ellipseEdge/100*vh;
+  var aPx = c.ellipseRX*c.ellipseEdge/100*vw, bPx = Math.min(c.ellipseRY*c.ellipseEdge/100*vh, aPx*c.ellipseRYMaxRatio);
   var nsx = (srcPxX-ctrPxX)/aPx, nsy = (srcPxY-ctrPxY)/bPx;
   var nd = Math.sqrt(nsx*nsx+nsy*nsy);
   if (nd <= 1.01) return null;
@@ -994,7 +994,6 @@ function updateBeam(bOut, bIn, spotX, spotY, moX, moY) {
 function initSpotlight() {
   if (window.innerWidth <= 767) return;
   var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
-  spotlightCfg.ellipseRY = isTablet ? 25 : 40;
   nextPage.querySelectorAll('[data-spotlight]').forEach(function(section) {
     var overlay = section.querySelector('.spotlight-overlay'); if (!overlay) return;
     var target = section.querySelector('[data-spotlight-target]');

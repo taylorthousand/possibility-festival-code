@@ -5,8 +5,9 @@
 [data-spotlight] .spotlight-overlay {
   --spotlight-x: 65%;
   --spotlight-y: 30%;
-  --spotlight-rx: 28%;
-  --spotlight-ry: 40%;
+  --spotlight-rx: 28vw;
+  /* ry grows with vh until it would exceed 0.85 × rx in pixels, then it's capped to stay proportional */
+  --spotlight-ry: min(40vh, calc(var(--spotlight-rx) * 0.85));
   --spotlight-rotation: 0deg;
 
   position: sticky;

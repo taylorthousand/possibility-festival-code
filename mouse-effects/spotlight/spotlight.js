@@ -39,8 +39,10 @@ const spotlightConfig = {
   beamOriginY: 37,
 
   // Ellipse radii (must match CSS --spotlight-rx / --spotlight-ry)
+  // rx is % of viewport width; ry is % of viewport height, capped so ry_px ≤ ryMaxRatio × rx_px
   ellipseRX: 28,
   ellipseRY: 40,
+  ellipseRYMaxRatio: 0.85,
   ellipseEdge: 0.85,      // visible fog edge vs geometric edge
 
   // Origin width: pushes virtual source behind origin to widen cone at source end
@@ -79,7 +81,8 @@ function computeBeamTangents(srcX, srcY, spotX, spotY) {
   var ctrPxX = spotX / 100 * vw;
   var ctrPxY = spotY / 100 * vh;
   var aPx = cfg.ellipseRX * cfg.ellipseEdge / 100 * vw;
-  var bPx = cfg.ellipseRY * cfg.ellipseEdge / 100 * vh;
+  var bPxNatural = cfg.ellipseRY * cfg.ellipseEdge / 100 * vh;
+  var bPx = Math.min(bPxNatural, aPx * cfg.ellipseRYMaxRatio);
 
   // Source in normalized ellipse space (transforms ellipse to unit circle)
   var normSrcX = (srcPxX - ctrPxX) / aPx;
@@ -228,7 +231,6 @@ function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffse
 function initSpotlight() {
   if (window.innerWidth <= 767) return;
   var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
-  spotlightConfig.ellipseRY = isTablet ? 25 : 40;
 
   const sections = document.querySelectorAll('[data-spotlight]');
 
