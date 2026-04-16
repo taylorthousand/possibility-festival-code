@@ -101,7 +101,7 @@ h6,
   }
 
   .heading-style-h1-110 {
-    font-size: clamp(56px, 18vw, 80px);
+    font-size: clamp(49px, 15.84vw, 70px);
   }
 
   .is-steps-heading {
