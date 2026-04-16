@@ -1378,17 +1378,47 @@ function initGradientEmanate() {
 // CONTAINER: FOOTER REVEAL
 
 function initFooterReveal() {
-  if (window.innerWidth < 992) return;
   var section = nextPage.querySelector('.section_register-cta')
     || nextPage.querySelector('.section_home-cta')
     || nextPage.querySelector('.section_donate-cta');
   var footer = document.querySelector('footer');
   if (!section || !footer) return;
-  ScrollTrigger.create({
-    trigger: section, start: 'bottom bottom',
-    end: function() { return '+=' + footer.offsetHeight; },
-    pin: true, pinSpacing: false
-  });
+
+  var st = null;
+
+  function shouldPin() {
+    return window.innerWidth >= 992 && section.offsetHeight > window.innerHeight;
+  }
+
+  function apply() {
+    var need = shouldPin();
+    if (need && !st) {
+      st = ScrollTrigger.create({
+        trigger: section, start: 'bottom bottom',
+        end: function() { return '+=' + footer.offsetHeight; },
+        pin: true, pinSpacing: false
+      });
+    } else if (!need && st) {
+      st.kill();
+      st = null;
+      ScrollTrigger.refresh();
+    }
+  }
+
+  apply();
+
+  var resizeTimer;
+  function scheduleApply() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(apply, 250);
+  }
+
+  var signal = containerAbort ? containerAbort.signal : undefined;
+  window.addEventListener('resize', scheduleApply, { signal: signal });
+
+  var ro = new ResizeObserver(scheduleApply);
+  ro.observe(section);
+  containerObservers.push(ro);
 }
 
 // CONTAINER: PARALLAX SECTIONS
