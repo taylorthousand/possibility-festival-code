@@ -966,6 +966,11 @@ function computeBeamTangents(srcX, srcY, spotX, spotY) {
 
 function updateBeam(bOut, bIn, spotX, spotY, moX, moY) {
   var c = spotlightCfg;
+  var T = 0.05;
+  if (bOut._lsx !== undefined &&
+      Math.abs(spotX-bOut._lsx)<T && Math.abs(spotY-bOut._lsy)<T &&
+      Math.abs(moX-bOut._lox)<T && Math.abs(moY-bOut._loy)<T) return;
+  bOut._lsx = spotX; bOut._lsy = spotY; bOut._lox = moX; bOut._loy = moY;
   var srcX = c.beamOriginX+moX, srcY = c.beamOriginY+moY;
   var dx = spotX-srcX, dy = spotY-srcY, dl = Math.sqrt(dx*dx+dy*dy);
   if (dl < 0.1) return;

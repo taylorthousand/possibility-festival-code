@@ -138,6 +138,22 @@ function computeBeamTangents(srcX, srcY, spotX, spotY) {
 function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffsetY) {
   var cfg = spotlightConfig;
 
+  // Dirty-check: skip re-rasterization when position deltas are imperceptible
+  // (< 0.05% viewport ≈ sub-pixel). Cuts wasted conic-gradient rebuilds during
+  // the tail of GSAP eases and micro-scroll updates.
+  var THRESH = 0.05;
+  if (beamOuter._lastSpotX !== undefined &&
+      Math.abs(spotX - beamOuter._lastSpotX) < THRESH &&
+      Math.abs(spotY - beamOuter._lastSpotY) < THRESH &&
+      Math.abs(mouseOffsetX - beamOuter._lastMoX) < THRESH &&
+      Math.abs(mouseOffsetY - beamOuter._lastMoY) < THRESH) {
+    return;
+  }
+  beamOuter._lastSpotX = spotX;
+  beamOuter._lastSpotY = spotY;
+  beamOuter._lastMoX = mouseOffsetX;
+  beamOuter._lastMoY = mouseOffsetY;
+
   // Source shifts with mouse (same damping as spotlight)
   var srcX = cfg.beamOriginX + mouseOffsetX;
   var srcY = cfg.beamOriginY + mouseOffsetY;
