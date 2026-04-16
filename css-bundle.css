@@ -93,11 +93,11 @@ h6,
 
 @media (max-width: 767px) {
   .heading-style-h1-125 {
-    font-size: clamp(36px, 11vw, 56px);
+    font-size: clamp(72px, 13vw, 88px);
   }
 
   .is-steps-heading {
-    font-size: clamp(30px, 9.5vw, 48px);
+    font-size: clamp(55px, 11vw, 72px);
   }
 }
 
