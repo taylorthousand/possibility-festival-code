@@ -141,6 +141,8 @@ function runPageOnceAnimation(next) {
   if (!wrap || sessionStorage.getItem(preloaderCfg.sessionKey)) {
     if (wrap) wrap.style.display = 'none';
     resetPage(next);
+    var tw = document.querySelector("[data-transition-wrap]");
+    if (tw) tw.style.display = "none";
     return Promise.resolve();
   }
 
@@ -149,6 +151,8 @@ function runPageOnceAnimation(next) {
     wrap.style.display = 'none';
     sessionStorage.setItem(preloaderCfg.sessionKey, '1');
     resetPage(next);
+    var tw2 = document.querySelector("[data-transition-wrap]");
+    if (tw2) tw2.style.display = "none";
     return Promise.resolve();
   }
 
@@ -285,6 +289,9 @@ function runPageOnceAnimation(next) {
       sessionStorage.setItem(preloaderCfg.sessionKey, '1');
       gsap.ticker.lagSmoothing(0);
       resetPage(next);
+      // Hide transition wrap after preloader so iOS Safari doesn't sample its yellow stroke
+      var tw = document.querySelector("[data-transition-wrap]");
+      if (tw) tw.style.display = "none";
       resolve();
     });
   });
@@ -295,6 +302,7 @@ function runPageLeaveAnimation(current, next) {
   document.documentElement.style.overflowY = 'scroll';
 
   var transitionWrap = document.querySelector("[data-transition-wrap]");
+  transitionWrap.style.display = "block";
   var transitionSVGPath = transitionWrap.querySelectorAll("svg path");
 
   var tl = gsap.timeline({
@@ -355,6 +363,10 @@ function runPageEnterAnimation(next) {
 
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
+  // Hide transition wrap so iOS Safari stops sampling its yellow SVG stroke
+  tl.call(function() {
+    document.querySelector("[data-transition-wrap]").style.display = "none";
+  }, null, "pageReady");
 
   return new Promise(function(resolve) {
     tl.call(resolve, null, "pageReady");
