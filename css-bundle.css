@@ -93,7 +93,7 @@ h6,
 
 @media (max-width: 767px) {
   .heading-style-h1-132 {
-    font-size: clamp(69px, 21vw, 94px);
+    font-size: clamp(66px, 20.5vw, 90px);
   }
 
   .heading-style-h1-125 {
