@@ -940,7 +940,7 @@ var spotlightCfg = {
   ellipseRX: 28, ellipseRY: 40, ellipseRYMaxRatio: 0.85, ellipseEdge: 0.85, originWidth: 37,
   beamColorR: 255, beamColorG: 248, beamColorB: 230,
   outerSoftEdge: 0.025, outerIntensity: 0.5, outerBlur: 4,
-  innerWidthRatio: 0.5, innerIntensity: 0.55, innerSoftEdge: 0.374, innerBlur: 10,
+  innerWidthRatio: 0.5, innerIntensity: 0.55, innerSoftEdge: 0.374, innerBlur: 7,
   maskStart: 0, maskEnd: 21
 };
 
@@ -986,14 +986,12 @@ function updateBeam(bOut, bIn, spotX, spotY, moX, moY) {
   var ofa = r.cssCenterAngle+r.negOffset-ose;
   bOut.style.background = 'conic-gradient(from '+ofa+'deg at '+vsx+'% '+vsy+'%,transparent 0deg,rgba('+cr+','+cg+','+cb+','+oe+') '+ose+'deg,rgba('+cr+','+cg+','+cb+','+op+') '+(ose+(-r.negOffset))+'deg,rgba('+cr+','+cg+','+cb+','+oe+') '+(ose+span)+'deg,transparent '+(ose+span+ose)+'deg,transparent 360deg)';
   bOut.style.maskImage = mask; bOut.style.webkitMaskImage = mask;
-  bOut.style.filter = 'blur('+c.outerBlur+'px)'; bOut.style.opacity = 1;
 
   var ino = r.negOffset*c.innerWidthRatio, ipo = r.posOffset*c.innerWidthRatio;
   var iSpan = ipo-ino, ise = iSpan*c.innerSoftEdge*0.5, ip = c.innerIntensity, ie = ip*0.7;
   var ifa = r.cssCenterAngle+ino-ise;
   bIn.style.background = 'conic-gradient(from '+ifa+'deg at '+vsx+'% '+vsy+'%,transparent 0deg,rgba('+cr+','+cg+','+cb+','+ie+') '+ise+'deg,rgba('+cr+','+cg+','+cb+','+ip+') '+(ise+(-ino))+'deg,rgba('+cr+','+cg+','+cb+','+ie+') '+(ise+iSpan)+'deg,transparent '+(ise+iSpan+ise)+'deg,transparent 360deg)';
   bIn.style.maskImage = mask; bIn.style.webkitMaskImage = mask;
-  bIn.style.filter = 'blur('+c.innerBlur+'px)'; bIn.style.opacity = 1;
 }
 
 function initSpotlight() {
@@ -1005,6 +1003,8 @@ function initSpotlight() {
     var hasTarget = !!target;
     var beamOuter = document.createElement('div'); beamOuter.classList.add('spotlight-beam'); overlay.appendChild(beamOuter);
     var beamInner = document.createElement('div'); beamInner.classList.add('spotlight-beam'); overlay.appendChild(beamInner);
+    beamOuter.style.filter = 'blur('+spotlightCfg.outerBlur+'px)'; beamOuter.style.opacity = 1;
+    beamInner.style.filter = 'blur('+spotlightCfg.innerBlur+'px)'; beamInner.style.opacity = 1;
     var baseX = 65, baseY = 30, isHov = false, lmX = 0, lmY = 0, frX = 0, frY = 0;
     var sp = {x:baseX,y:baseY,ox:0,oy:0};
     overlay.style.setProperty('--spotlight-x',baseX+'%'); overlay.style.setProperty('--spotlight-y',baseY+'%');

@@ -62,7 +62,7 @@ const spotlightConfig = {
   innerWidthRatio: 0.5,   // fraction of outer tangent span
   innerIntensity: 0.55,   // peak opacity
   innerSoftEdge: 0.374,   // soft edge multiplier
-  innerBlur: 10,          // px
+  innerBlur: 7,           // px
 
   // Mask (length fade along beam axis)
   maskStart: 0,           // % where beam is fully visible
@@ -210,8 +210,6 @@ function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffse
     ')';
   beamOuter.style.maskImage = maskGradient;
   beamOuter.style.webkitMaskImage = maskGradient;
-  beamOuter.style.filter = 'blur(' + cfg.outerBlur + 'px)';
-  beamOuter.style.opacity = 1;
 
   // --- Inner column ---
   var innerNegOff = negOff * cfg.innerWidthRatio;
@@ -239,8 +237,6 @@ function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffse
     ')';
   beamInner.style.maskImage = maskGradient;
   beamInner.style.webkitMaskImage = maskGradient;
-  beamInner.style.filter = 'blur(' + cfg.innerBlur + 'px)';
-  beamInner.style.opacity = 1;
 }
 
 /* --- Init --- */
@@ -265,6 +261,12 @@ function initSpotlight() {
     const beamInner = document.createElement('div');
     beamInner.classList.add('spotlight-beam');
     overlay.appendChild(beamInner);
+
+    // Static styles — hoisted out of updateBeam since they never change per frame
+    beamOuter.style.filter = 'blur(' + spotlightConfig.outerBlur + 'px)';
+    beamOuter.style.opacity = 1;
+    beamInner.style.filter = 'blur(' + spotlightConfig.innerBlur + 'px)';
+    beamInner.style.opacity = 1;
 
     // Fallback position when no target element is found
     const fallbackX = 65;
