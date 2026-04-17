@@ -239,10 +239,23 @@ function updateBeam(beamOuter, beamInner, spotX, spotY, mouseOffsetX, mouseOffse
   beamInner.style.webkitMaskImage = maskGradient;
 }
 
+/* --- Low-power device detection --- */
+// Flags devices that will likely struggle with the beam's conic + blur compositing:
+// Chromebooks (common in schools, usually weak GPUs), machines with ≤4 CPU cores
+// (correlates with entry-level hardware), and users who've opted into reduced motion.
+// Test override: append ?lowpower=1 to the URL to preview the degraded experience.
+function isLowPowerDevice() {
+  if (window.location.search.indexOf('lowpower=1') !== -1) return true;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+  if (/CrOS/i.test(navigator.userAgent)) return true;
+  return !!(navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+}
+
 /* --- Init --- */
 function initSpotlight() {
   if (window.innerWidth <= 767) return;
   var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
+  var isLowPower = isLowPowerDevice();
 
   const sections = document.querySelectorAll('[data-spotlight]');
 
@@ -253,20 +266,25 @@ function initSpotlight() {
     const target = section.querySelector('[data-spotlight-target]');
     const hasTarget = !!target;
 
-    // Create beam elements (outer cone + inner column)
-    const beamOuter = document.createElement('div');
-    beamOuter.classList.add('spotlight-beam');
-    overlay.appendChild(beamOuter);
+    // Create beam elements (outer cone + inner column) — skipped on low-power devices.
+    // On low-power, the fog overlay still renders; the beam (expensive conic + blur) is dropped.
+    let beamOuter = null;
+    let beamInner = null;
+    if (!isLowPower) {
+      beamOuter = document.createElement('div');
+      beamOuter.classList.add('spotlight-beam');
+      overlay.appendChild(beamOuter);
 
-    const beamInner = document.createElement('div');
-    beamInner.classList.add('spotlight-beam');
-    overlay.appendChild(beamInner);
+      beamInner = document.createElement('div');
+      beamInner.classList.add('spotlight-beam');
+      overlay.appendChild(beamInner);
 
-    // Static styles — hoisted out of updateBeam since they never change per frame
-    beamOuter.style.filter = 'blur(' + spotlightConfig.outerBlur + 'px)';
-    beamOuter.style.opacity = 1;
-    beamInner.style.filter = 'blur(' + spotlightConfig.innerBlur + 'px)';
-    beamInner.style.opacity = 1;
+      // Static styles — hoisted out of updateBeam since they never change per frame
+      beamOuter.style.filter = 'blur(' + spotlightConfig.outerBlur + 'px)';
+      beamOuter.style.opacity = 1;
+      beamInner.style.filter = 'blur(' + spotlightConfig.innerBlur + 'px)';
+      beamInner.style.opacity = 1;
+    }
 
     // Fallback position when no target element is found
     const fallbackX = 65;
@@ -301,7 +319,13 @@ function initSpotlight() {
     }
 
     // --- Helper: animate ellipse + beam to a target position in lockstep ---
+    // Low-power path: direct CSS var set, no GSAP tween (no beam to sync with).
     function animateTo(targetX, targetY, offsetX, offsetY) {
+      if (!beamOuter) {
+        overlay.style.setProperty('--spotlight-x', targetX + '%');
+        overlay.style.setProperty('--spotlight-y', targetY + '%');
+        return;
+      }
       gsap.to(spotPos, {
         x: targetX,
         y: targetY,
@@ -339,8 +363,8 @@ function initSpotlight() {
     updateBaseFromTarget();
     applyPosition();
 
-    // --- Mouse events (disabled on tablet — no parallax on touch) ---
-    if (!isTablet) {
+    // --- Mouse events (disabled on tablet and low-power devices) ---
+    if (!isTablet && !isLowPower) {
       section.addEventListener('mousemove', (e) => {
         isHovering = true;
         lastMouseX = (e.clientX / window.innerWidth) * 100;

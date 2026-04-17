@@ -994,22 +994,37 @@ function updateBeam(bOut, bIn, spotX, spotY, moX, moY) {
   bIn.style.maskImage = mask; bIn.style.webkitMaskImage = mask;
 }
 
+function isLowPowerDevice() {
+  if (window.location.search.indexOf('lowpower=1') !== -1) return true;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+  if (/CrOS/i.test(navigator.userAgent)) return true;
+  return !!(navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+}
+
 function initSpotlight() {
   if (window.innerWidth <= 767) return;
   var isTablet = window.innerWidth <= 991 && window.innerWidth >= 768;
+  var isLowPower = isLowPowerDevice();
   nextPage.querySelectorAll('[data-spotlight]').forEach(function(section) {
     var overlay = section.querySelector('.spotlight-overlay'); if (!overlay) return;
     var target = section.querySelector('[data-spotlight-target]');
     var hasTarget = !!target;
-    var beamOuter = document.createElement('div'); beamOuter.classList.add('spotlight-beam'); overlay.appendChild(beamOuter);
-    var beamInner = document.createElement('div'); beamInner.classList.add('spotlight-beam'); overlay.appendChild(beamInner);
-    beamOuter.style.filter = 'blur('+spotlightCfg.outerBlur+'px)'; beamOuter.style.opacity = 1;
-    beamInner.style.filter = 'blur('+spotlightCfg.innerBlur+'px)'; beamInner.style.opacity = 1;
+    var beamOuter = null, beamInner = null;
+    if (!isLowPower) {
+      beamOuter = document.createElement('div'); beamOuter.classList.add('spotlight-beam'); overlay.appendChild(beamOuter);
+      beamInner = document.createElement('div'); beamInner.classList.add('spotlight-beam'); overlay.appendChild(beamInner);
+      beamOuter.style.filter = 'blur('+spotlightCfg.outerBlur+'px)'; beamOuter.style.opacity = 1;
+      beamInner.style.filter = 'blur('+spotlightCfg.innerBlur+'px)'; beamInner.style.opacity = 1;
+    }
     var baseX = 65, baseY = 30, isHov = false, lmX = 0, lmY = 0, frX = 0, frY = 0;
     var sp = {x:baseX,y:baseY,ox:0,oy:0};
     overlay.style.setProperty('--spotlight-x',baseX+'%'); overlay.style.setProperty('--spotlight-y',baseY+'%');
 
     function animTo(tx,ty,ox,oy) {
+      if (!beamOuter) {
+        overlay.style.setProperty('--spotlight-x',tx+'%'); overlay.style.setProperty('--spotlight-y',ty+'%');
+        return;
+      }
       gsap.to(sp,{x:tx,y:ty,ox:ox,oy:oy,duration:spotlightCfg.easeDuration,ease:'power2.out',overwrite:'auto',
         onUpdate:function(){overlay.style.setProperty('--spotlight-x',sp.x+'%');overlay.style.setProperty('--spotlight-y',sp.y+'%');updateBeam(beamOuter,beamInner,sp.x,sp.y,sp.ox,sp.oy);}});
     }
@@ -1027,7 +1042,7 @@ function initSpotlight() {
     }
     updBase(); applyPos();
 
-    if (!isTablet) {
+    if (!isTablet && !isLowPower) {
       section.addEventListener('mousemove',function(e){
         isHov=true; lmX=(e.clientX/window.innerWidth)*100; lmY=(e.clientY/window.innerHeight)*100;
         var ox=(lmX-50)*spotlightCfg.damping, oy=(lmY-50)*spotlightCfg.damping;
