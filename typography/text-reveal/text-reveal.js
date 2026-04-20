@@ -106,6 +106,12 @@ function initTextReveal() {
       type === 'words' ? ['lines', 'words'] :
       ['lines', 'words', 'chars']
 
+    // Transform-aware getBoundingClientRect would mis-group words into one-word-lines
+    // if .hero_inner's scroll scrub has already applied rotation/scale (refresh past hero).
+    const heroInner = heading.closest('.hero_inner')
+    const savedHeroInnerTransform = heroInner ? heroInner.style.transform : null
+    if (heroInner) heroInner.style.transform = 'none'
+
     // Split the text
     SplitText.create(heading, {
       type: typesToSplit.join(', '),
@@ -115,6 +121,7 @@ function initTextReveal() {
       wordsClass: 'word',
       charsClass: 'letter',
       onSplit: function(instance) {
+        if (heroInner && savedHeroInnerTransform !== null) heroInner.style.transform = savedHeroInnerTransform
         // Restore preserved spans after split
         restoreSpans(heading, preserved)
         gsap.set(heading, { autoAlpha: 1 })

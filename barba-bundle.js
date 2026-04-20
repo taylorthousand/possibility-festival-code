@@ -762,10 +762,17 @@ function doTextReveal() {
     }
     var typesToSplit = type === 'lines' ? ['lines'] : type === 'words' ? ['lines', 'words'] : ['lines', 'words', 'chars'];
 
+    // Transform-aware getBoundingClientRect would mis-group words into one-word-lines
+    // if .hero_inner's scroll scrub has already applied rotation/scale (refresh past hero).
+    var heroInner = heading.closest('.hero_inner');
+    var savedHeroInnerTransform = heroInner ? heroInner.style.transform : null;
+    if (heroInner) heroInner.style.transform = 'none';
+
     SplitText.create(heading, {
       type: typesToSplit.join(', '), mask: 'lines', autoSplit: true,
       linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
       onSplit: function(instance) {
+        if (heroInner && savedHeroInnerTransform !== null) heroInner.style.transform = savedHeroInnerTransform;
         restoreSpans(heading, preserved);
         gsap.set(heading, { autoAlpha: 1 });
         var targets = instance[type];
