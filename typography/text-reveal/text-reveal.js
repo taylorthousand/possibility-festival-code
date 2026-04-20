@@ -107,53 +107,64 @@ function initTextReveal() {
       ['lines', 'words', 'chars']
 
     // Transform-aware getBoundingClientRect would mis-group words into one-word-lines
-    // if .hero_inner's scroll scrub has already applied rotation/scale (refresh past hero).
+    // if .hero_inner's scroll scrub has already applied rotation/scale. Clear before
+    // measurement, restore in onSplit. Hero heading also needs its own resize handler
+    // (autoSplit off) so the transform can be cleared before each internal resplit.
     const heroInner = heading.closest('.hero_inner')
-    const savedHeroInnerTransform = heroInner ? heroInner.style.transform : null
-    if (heroInner) heroInner.style.transform = 'none'
 
-    // Split the text
-    SplitText.create(heading, {
-      type: typesToSplit.join(', '),
-      mask: 'lines',
-      autoSplit: true,
-      linesClass: 'line',
-      wordsClass: 'word',
-      charsClass: 'letter',
-      onSplit: function(instance) {
-        if (heroInner && savedHeroInnerTransform !== null) heroInner.style.transform = savedHeroInnerTransform
-        // Restore preserved spans after split
-        restoreSpans(heading, preserved)
-        gsap.set(heading, { autoAlpha: 1 })
+    function createSplit() {
+      const savedTransform = heroInner ? heroInner.style.transform : null
+      if (heroInner) heroInner.style.transform = 'none'
 
-        const targets = instance[type]
-        const config = splitConfig[type]
+      return SplitText.create(heading, {
+        type: typesToSplit.join(', '),
+        mask: 'lines',
+        autoSplit: !heroInner,
+        linesClass: 'line',
+        wordsClass: 'word',
+        charsClass: 'letter',
+        onSplit: function(instance) {
+          if (heroInner && savedTransform !== null) heroInner.style.transform = savedTransform
+          restoreSpans(heading, preserved)
+          gsap.set(heading, { autoAlpha: 1 })
 
-        // Base animation properties (shared by both trigger types)
-        const animationProps = {
-          yPercent: 110,
-          duration: slow ? config.duration * 2 : config.duration,
-          stagger: slow ? config.stagger * 2 : config.stagger,
-          ease: 'expo.out'
+          const targets = instance[type]
+          const config = splitConfig[type]
+          const animationProps = {
+            yPercent: 110,
+            duration: slow ? config.duration * 2 : config.duration,
+            stagger: slow ? config.stagger * 2 : config.stagger,
+            ease: 'expo.out'
+          }
+
+          if (trigger === 'load') {
+            return gsap.from(targets, animationProps);
+          } else {
+            return gsap.from(targets, {
+              ...animationProps,
+              scrollTrigger: {
+                trigger: heading,
+                start: triggerConfig[speed],
+                once: true
+              }
+            });
+          }
         }
+      })
+    }
 
-        // Branch based on trigger type
-        if (trigger === 'load') {
-          // Immediate animation on page load
-          return gsap.from(targets, animationProps);
-        } else {
-          // Scroll-triggered animation
-          return gsap.from(targets, {
-            ...animationProps,
-            scrollTrigger: {
-              trigger: heading,
-              start: triggerConfig[speed],
-              once: true
-            }
-          });
-        }
-      }
-    })
+    let splitInstance = createSplit()
+
+    if (heroInner) {
+      let resizeTimer
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer)
+        resizeTimer = setTimeout(() => {
+          splitInstance.revert()
+          splitInstance = createSplit()
+        }, 200)
+      })
+    }
   })
 }
 

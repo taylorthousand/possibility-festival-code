@@ -763,35 +763,55 @@ function doTextReveal() {
     var typesToSplit = type === 'lines' ? ['lines'] : type === 'words' ? ['lines', 'words'] : ['lines', 'words', 'chars'];
 
     // Transform-aware getBoundingClientRect would mis-group words into one-word-lines
-    // if .hero_inner's scroll scrub has already applied rotation/scale (refresh past hero).
+    // if .hero_inner's scroll scrub has already applied rotation/scale. Clear before
+    // measurement, restore in onSplit. Hero heading also needs its own resize handler
+    // (autoSplit off) so the transform can be cleared before each internal resplit.
     var heroInner = heading.closest('.hero_inner');
-    var savedHeroInnerTransform = heroInner ? heroInner.style.transform : null;
-    if (heroInner) heroInner.style.transform = 'none';
 
-    SplitText.create(heading, {
-      type: typesToSplit.join(', '), mask: 'lines', autoSplit: true,
-      linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
-      onSplit: function(instance) {
-        if (heroInner && savedHeroInnerTransform !== null) heroInner.style.transform = savedHeroInnerTransform;
-        restoreSpans(heading, preserved);
-        gsap.set(heading, { autoAlpha: 1 });
-        var targets = instance[type];
-        var cfg = splitRevealConfig[type];
-        var animProps = {
-          yPercent: 110,
-          duration: slow ? cfg.duration * 2 : cfg.duration,
-          stagger: slow ? cfg.stagger * 2 : cfg.stagger,
-          ease: 'expo.out'
-        };
-        if (trigger === 'load') {
-          if (loadRevealFired) { gsap.set(targets, { yPercent: 0 }); return; }
-          loadRevealFired = true;
+    function createSplit() {
+      var savedTransform = heroInner ? heroInner.style.transform : null;
+      if (heroInner) heroInner.style.transform = 'none';
+
+      return SplitText.create(heading, {
+        type: typesToSplit.join(', '), mask: 'lines', autoSplit: !heroInner,
+        linesClass: 'line', wordsClass: 'word', charsClass: 'letter',
+        onSplit: function(instance) {
+          if (heroInner && savedTransform !== null) heroInner.style.transform = savedTransform;
+          restoreSpans(heading, preserved);
+          gsap.set(heading, { autoAlpha: 1 });
+          var targets = instance[type];
+          var cfg = splitRevealConfig[type];
+          var animProps = {
+            yPercent: 110,
+            duration: slow ? cfg.duration * 2 : cfg.duration,
+            stagger: slow ? cfg.stagger * 2 : cfg.stagger,
+            ease: 'expo.out'
+          };
+          if (trigger === 'load') {
+            if (loadRevealFired) { gsap.set(targets, { yPercent: 0 }); return; }
+            loadRevealFired = true;
+            return gsap.from(targets, animProps);
+          }
+          animProps.scrollTrigger = { trigger: heading, start: triggerRevealConfig[speed], once: true };
           return gsap.from(targets, animProps);
         }
-        animProps.scrollTrigger = { trigger: heading, start: triggerRevealConfig[speed], once: true };
-        return gsap.from(targets, animProps);
-      }
-    });
+      });
+    }
+
+    var splitInstance = createSplit();
+
+    if (heroInner) {
+      var resizeTimer;
+      var onResize = function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          splitInstance.revert();
+          splitInstance = createSplit();
+        }, 200);
+      };
+      var listenerOpts = containerAbort ? { signal: containerAbort.signal } : false;
+      window.addEventListener('resize', onResize, listenerOpts);
+    }
   });
 }
 
