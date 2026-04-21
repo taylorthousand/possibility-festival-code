@@ -78,6 +78,13 @@
     return atNarrow + t * (atWide - atNarrow);
   }
 
+  function isLowPowerDevice() {
+    if (window.location.search.indexOf('lowpower=1') !== -1) return true;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+    if (/CrOS/i.test(navigator.userAgent)) return true;
+    return !!(navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+  }
+
   /* ---------- RESPONSIVE OVERRIDES ---------- */
   var tabletOverrides = {
     radiusX: inverseScale(44, 55, 992, 768),
@@ -179,74 +186,89 @@
 
   /* ---------- UPDATE ---------- */
 
-  function updateCarousel(progress, polaroids, originX, originY) {
+  function updateCarousel(progress, polaroids, originX, originY, baseAngles, exitStarts, exitEnds, dropFilter) {
     var spin = carouselAngle(progress);
 
-    polaroids.forEach(function (el, i) {
-      // Even orbit spacing
-      var baseAngle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+    // Cache per-frame constants so we don't re-read window.innerWidth
+    // or recompute config-derived ranges inside each card's inner loop.
+    var vwPx = window.innerWidth / 100;
+    var radiusXpx = config.radiusX * vwPx;
+    var radiusYpx = config.radiusY * vwPx;
+    var exitToX = window.innerWidth * 1.2;
+    var scaleMin = config.scaleMin;
+    var scaleRange = config.scaleMax - scaleMin;
+    var brightnessMin = config.brightnessMin;
+    var brightnessRange = config.brightnessMax - brightnessMin;
 
-      // Exit timing for this card
-      var exitStart = calcExitStart(i);
-      var exitEnd = exitStart + config.exitDuration;
+    polaroids.forEach(function (el, i) {
+      var baseAngle = baseAngles[i];
+      var exitStart = exitStarts[i];
+      var exitEnd = exitEnds[i];
 
       if (progress < exitStart) {
         /* --- Orbiting: follow the carousel --- */
+        el._carouselGone = false;
         var angle = baseAngle + spin;
-        var d = depth(angle);
+        var sa = Math.sin(angle);
+        var ca = Math.cos(angle);
+        var dNorm = (sa + 1) * 0.5;  // sin(angle) mapped from [-1,1] to [0,1]
 
         // Blend idle waver out over early scroll progress
         var waverBlend = gsap.utils.clamp(0, 1, 1 - progress / config.waverBlendDuration);
 
-        gsap.set(el, {
-          x: originX + orbitPxX(angle),
-          y: originY + orbitPxY(angle),
-          scale: map(d, -1, 1, config.scaleMin, config.scaleMax),
-          opacity: 1,
+        var props = {
+          x: originX + ca * radiusXpx,
+          y: originY + sa * radiusYpx,
+          scale: scaleMin + dNorm * scaleRange,
           rotation: gsap.utils.interpolate(waverRotation(i), lean(angle, i), 1 - waverBlend),
-          filter: 'brightness(' + map(d, -1, 1, config.brightnessMin, config.brightnessMax) + ')',
-          zIndex: Math.round((d + 1) * 500),
-        });
+          zIndex: Math.round(dNorm * 1000),
+        };
+        if (!dropFilter) props.filter = 'brightness(' + (brightnessMin + dNorm * brightnessRange) + ')';
+        gsap.set(el, props);
 
       } else if (progress < exitEnd) {
         /* --- Flying out: peel off to the right --- */
+        el._carouselGone = false;
         var t = (progress - exitStart) / config.exitDuration;
         var eased = exitEase(t);
 
         // Live orbit position: card keeps following the carousel, gradually peels away
         var angle = baseAngle + spin;
-        var d = depth(angle);
-        var fromX = originX + orbitPxX(angle);
-        var fromY = originY + orbitPxY(angle);
-        var fromScale = map(d, -1, 1, config.scaleMin, config.scaleMax);
-        var fromBrightness = map(d, -1, 1, config.brightnessMin, config.brightnessMax);
+        var sa = Math.sin(angle);
+        var ca = Math.cos(angle);
+        var dNorm = (sa + 1) * 0.5;
+        var fromX = originX + ca * radiusXpx;
+        var fromY = originY + sa * radiusYpx;
+        var fromScale = scaleMin + dNorm * scaleRange;
         var fromLean = lean(angle, i);
 
-        // Target: off-screen right (full viewport width)
-        var toX = window.innerWidth * 1.2;
-        var toY = originY;
-
-        gsap.set(el, {
-          x: gsap.utils.interpolate(fromX, toX, eased),
-          y: gsap.utils.interpolate(fromY, toY, eased),
+        var props = {
+          x: gsap.utils.interpolate(fromX, exitToX, eased),
+          y: gsap.utils.interpolate(fromY, originY, eased),
           scale: gsap.utils.interpolate(fromScale, 1, eased),
-          opacity: 1,
           rotation: gsap.utils.interpolate(fromLean, config.exitLean, eased),
-          filter: 'brightness(' + gsap.utils.interpolate(fromBrightness, 1, eased) + ')',
-          zIndex: Math.round((d + 1) * 500),
-        });
+          zIndex: Math.round(dNorm * 1000),
+        };
+        if (!dropFilter) {
+          var fromBrightness = brightnessMin + dNorm * brightnessRange;
+          props.filter = 'brightness(' + gsap.utils.interpolate(fromBrightness, 1, eased) + ')';
+        }
+        gsap.set(el, props);
 
       } else {
-        /* --- Gone: off-screen right --- */
-        gsap.set(el, {
-          x: window.innerWidth * 1.2,
+        /* --- Gone: off-screen right. Write once per entering-gone-state,
+           then short-circuit subsequent frames since values never change. --- */
+        if (el._carouselGone) return;
+        el._carouselGone = true;
+        var props = {
+          x: exitToX,
           y: originY,
           scale: 1,
-          opacity: 1,
           rotation: config.exitLean,
-          filter: 'brightness(1)',
           zIndex: 0,
-        });
+        };
+        if (!dropFilter) props.filter = 'brightness(1)';
+        gsap.set(el, props);
       }
     });
   }
@@ -255,6 +277,11 @@
 
   function init() {
     if (window.innerWidth < 768) return; // DIAGNOSTIC: isolating mobile scroll jank
+
+    // Drop per-frame filter: brightness() on devices where rasterization is the
+    // bottleneck — tablets (modest GPU vs pixel count), Chromebooks, <=4 cores,
+    // prefers-reduced-motion, ?lowpower=1. Scale still carries the depth cue.
+    var dropFilter = isLowPowerDevice() || window.innerWidth < 992;
 
     var section = document.querySelector('[data-carousel="polaroid"]');
     if (!section) return;
@@ -277,48 +304,65 @@
     var remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
     originY += config.orbitOffsetY * remPx;
 
+    // Precompute per-card constants — baseAngle, exitStart, exitEnd are deterministic
+    // by card index, so we build them once here instead of redoing them each tick.
+    var baseAngles = new Array(TOTAL);
+    var exitStarts = new Array(TOTAL);
+    var exitEnds = new Array(TOTAL);
+    var maxExitEnd = 0;
+    for (var i = 0; i < TOTAL; i++) {
+      baseAngles[i] = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+      exitStarts[i] = calcExitStart(i);
+      exitEnds[i] = exitStarts[i] + config.exitDuration;
+      if (exitEnds[i] > maxExitEnd) maxExitEnd = exitEnds[i];
+    }
+    var progressScale = Math.max(1, maxExitEnd);
+
     // Initial state: cards in their orbit positions at progress 0
     polaroids.forEach(function (el, i) {
-      var angle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+      var angle = baseAngles[i];
       var d = depth(angle);
 
-      gsap.set(el, {
+      var props = {
         x: originX + orbitPxX(angle),
         y: originY + orbitPxY(angle),
         scale: map(d, -1, 1, config.scaleMin, config.scaleMax),
         opacity: 1,
         rotation: lean(angle, i),
-        filter: 'brightness(' + map(d, -1, 1, config.brightnessMin, config.brightnessMax) + ')',
         zIndex: Math.round((d + 1) * 500),
-      });
+      };
+      if (!dropFilter) props.filter = 'brightness(' + map(d, -1, 1, config.brightnessMin, config.brightnessMax) + ')';
+      gsap.set(el, props);
     });
 
-    // Pre-compute exit timing to find if any exits overflow past progress 1.0
-    var maxExitEnd = 0;
-    for (var i = 0; i < TOTAL; i++) {
-      maxExitEnd = Math.max(maxExitEnd, calcExitStart(i) + config.exitDuration);
-    }
-    var progressScale = Math.max(1, maxExitEnd);
-
-    // Progress bar
+    // Progress bar — scaleX transform avoids per-frame layout/paint (vs. animating width %)
     var progressBar = document.createElement('div');
-    progressBar.style.cssText = 'position:absolute;bottom:0;left:0;width:0%;height:0.375rem;background:#FFCC00;z-index:2000;';
+    progressBar.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:0.375rem;background:#FFCC00;z-index:2000;transform-origin:left center;transform:scaleX(0);will-change:transform;';
     section.appendChild(progressBar);
 
     // Idle waver ticker — runs continuously to advance time,
-    // applies wobble rotation directly when scroll is inactive
+    // applies wobble rotation directly when scroll is inactive AND the
+    // section is anywhere near the viewport (skips writes when offscreen).
     var scrollActive = false;
+    var sectionInView = false;
 
     var idleTickerFn = function () {
       waverTime += gsap.ticker.deltaRatio() / 60;
-      if (!scrollActive) {
+      if (sectionInView && !scrollActive) {
         polaroids.forEach(function (el, i) {
-          var angle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
           gsap.set(el, { rotation: waverRotation(i) });
         });
       }
     };
     gsap.ticker.add(idleTickerFn);
+
+    // Track whether the section overlaps the viewport at all
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: function (self) { sectionInView = self.isActive; },
+    });
 
     // Pin + scrub
     ScrollTrigger.create({
@@ -330,8 +374,8 @@
       onEnter: function () { scrollActive = true; },
       onLeaveBack: function () { scrollActive = false; },
       onUpdate: function (self) {
-        updateCarousel(self.progress * progressScale, polaroids, originX, originY);
-        progressBar.style.width = (self.progress * 100) + '%';
+        updateCarousel(self.progress * progressScale, polaroids, originX, originY, baseAngles, exitStarts, exitEnds, dropFilter);
+        progressBar.style.transform = 'scaleX(' + self.progress + ')';
       },
     });
 

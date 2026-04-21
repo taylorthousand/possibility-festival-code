@@ -1493,6 +1493,12 @@ function initParallaxSections() {
 
 function initPolaroidCarousel() {
   if (window.innerWidth < 768) return; // DIAGNOSTIC: isolating mobile scroll jank
+
+  // Drop per-frame filter: brightness() on devices where rasterization is the
+  // bottleneck — tablets, Chromebooks, <=4 cores, prefers-reduced-motion,
+  // ?lowpower=1. Scale still carries the depth cue.
+  var dropFilter = isLowPowerDevice() || window.innerWidth < 992;
+
   var section = nextPage.querySelector('[data-carousel="polaroid"]');
   if (!section) return;
   var polaroids = gsap.utils.toArray(section.querySelectorAll('.polaroid.vertical.is-carousel'));
@@ -1561,71 +1567,108 @@ function initPolaroidCarousel() {
   var remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
   originY += cc.orbitOffsetY * remPx;
 
+  // Precompute per-card constants (deterministic by index, don't redo each tick)
+  var baseAngles = new Array(TOTAL);
+  var exitStarts = new Array(TOTAL);
+  var exitEnds = new Array(TOTAL);
+  var maxExitEnd = 0;
+  for (var i = 0; i < TOTAL; i++) {
+    baseAngles[i] = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+    exitStarts[i] = calcExitStart(i);
+    exitEnds[i] = exitStarts[i] + cc.exitDuration;
+    if (exitEnds[i] > maxExitEnd) maxExitEnd = exitEnds[i];
+  }
+  var progressScale = Math.max(1, maxExitEnd);
+
   // Initial orbit positions
   polaroids.forEach(function(el, i) {
-    var angle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
+    var angle = baseAngles[i];
     var d = depth(angle);
-    gsap.set(el, {
+    var props = {
       x: originX + orbitPxX(angle), y: originY + orbitPxY(angle),
       scale: map(d, -1, 1, cc.scaleMin, cc.scaleMax), opacity: 1,
       rotation: lean(angle, i),
-      filter: 'brightness(' + map(d, -1, 1, cc.brightnessMin, cc.brightnessMax) + ')',
       zIndex: Math.round((d + 1) * 500)
-    });
+    };
+    if (!dropFilter) props.filter = 'brightness(' + map(d, -1, 1, cc.brightnessMin, cc.brightnessMax) + ')';
+    gsap.set(el, props);
   });
 
-  var maxExitEnd = 0;
-  for (var i = 0; i < TOTAL; i++) maxExitEnd = Math.max(maxExitEnd, calcExitStart(i) + cc.exitDuration);
-  var progressScale = Math.max(1, maxExitEnd);
-
+  // Progress bar — scaleX transform avoids per-frame layout/paint (vs. animating width %)
   var progressBar = document.createElement('div');
-  progressBar.style.cssText = 'position:absolute;bottom:0;left:0;width:0%;height:0.375rem;background:#FFCC00;z-index:2000;';
+  progressBar.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:0.375rem;background:#FFCC00;z-index:2000;transform-origin:left center;transform:scaleX(0);will-change:transform;';
   section.appendChild(progressBar);
 
   function updateCarousel(progress) {
     var spin = carouselAngle(progress);
+    // Cache per-frame constants (avoid reading window.innerWidth + recomputing ranges per card)
+    var vwPx = window.innerWidth / 100;
+    var radiusXpx = cc.radiusX * vwPx;
+    var radiusYpx = cc.radiusY * vwPx;
+    var exitToX = window.innerWidth * 1.2;
+    var scaleMin = cc.scaleMin;
+    var scaleRange = cc.scaleMax - scaleMin;
+    var brightnessMin = cc.brightnessMin;
+    var brightnessRange = cc.brightnessMax - brightnessMin;
     polaroids.forEach(function(el, i) {
-      var baseAngle = BACK_ANGLE + (i / TOTAL) * TWO_PI;
-      var es = calcExitStart(i), ee = es + cc.exitDuration;
+      var baseAngle = baseAngles[i];
+      var es = exitStarts[i], ee = exitEnds[i];
       if (progress < es) {
-        var angle = baseAngle + spin, d = depth(angle);
+        el._carouselGone = false;
+        var angle = baseAngle + spin;
+        var sa = Math.sin(angle), ca = Math.cos(angle);
+        var dNorm = (sa + 1) * 0.5;
         var wb = gsap.utils.clamp(0, 1, 1 - progress / cc.waverBlendDuration);
-        gsap.set(el, {
-          x: originX + orbitPxX(angle), y: originY + orbitPxY(angle),
-          scale: map(d, -1, 1, cc.scaleMin, cc.scaleMax), opacity: 1,
+        var props = {
+          x: originX + ca * radiusXpx, y: originY + sa * radiusYpx,
+          scale: scaleMin + dNorm * scaleRange,
           rotation: gsap.utils.interpolate(waverRot(i), lean(angle, i), 1 - wb),
-          filter: 'brightness(' + map(d, -1, 1, cc.brightnessMin, cc.brightnessMax) + ')',
-          zIndex: Math.round((d + 1) * 500)
-        });
+          zIndex: Math.round(dNorm * 1000)
+        };
+        if (!dropFilter) props.filter = 'brightness(' + (brightnessMin + dNorm * brightnessRange) + ')';
+        gsap.set(el, props);
       } else if (progress < ee) {
+        el._carouselGone = false;
         var t = (progress - es) / cc.exitDuration, eased = exitEase(t);
-        var angle = baseAngle + spin, d = depth(angle);
-        var fX = originX + orbitPxX(angle), fY = originY + orbitPxY(angle);
-        var fS = map(d, -1, 1, cc.scaleMin, cc.scaleMax);
-        var fB = map(d, -1, 1, cc.brightnessMin, cc.brightnessMax);
+        var angle = baseAngle + spin;
+        var sa = Math.sin(angle), ca = Math.cos(angle);
+        var dNorm = (sa + 1) * 0.5;
+        var fX = originX + ca * radiusXpx, fY = originY + sa * radiusYpx;
+        var fS = scaleMin + dNorm * scaleRange;
         var fL = lean(angle, i);
-        gsap.set(el, {
-          x: gsap.utils.interpolate(fX, window.innerWidth * 1.2, eased),
+        var props = {
+          x: gsap.utils.interpolate(fX, exitToX, eased),
           y: gsap.utils.interpolate(fY, originY, eased),
-          scale: gsap.utils.interpolate(fS, 1, eased), opacity: 1,
+          scale: gsap.utils.interpolate(fS, 1, eased),
           rotation: gsap.utils.interpolate(fL, cc.exitLean, eased),
-          filter: 'brightness(' + gsap.utils.interpolate(fB, 1, eased) + ')',
-          zIndex: Math.round((d + 1) * 500)
-        });
+          zIndex: Math.round(dNorm * 1000)
+        };
+        if (!dropFilter) {
+          var fB = brightnessMin + dNorm * brightnessRange;
+          props.filter = 'brightness(' + gsap.utils.interpolate(fB, 1, eased) + ')';
+        }
+        gsap.set(el, props);
       } else {
-        gsap.set(el, {
-          x: window.innerWidth * 1.2, y: originY, scale: 1, opacity: 1,
-          rotation: cc.exitLean, filter: 'brightness(1)', zIndex: 0
-        });
+        // Gone: write once per entering-gone-state, then short-circuit
+        if (el._carouselGone) return;
+        el._carouselGone = true;
+        var props = {
+          x: exitToX, y: originY, scale: 1,
+          rotation: cc.exitLean, zIndex: 0
+        };
+        if (!dropFilter) props.filter = 'brightness(1)';
+        gsap.set(el, props);
       }
     });
   }
 
-  // Idle waver ticker
+  // Idle waver ticker — advances time always; writes styles only when
+  // scroll is inactive AND the section overlaps the viewport.
   var scrollActive = false;
+  var sectionInView = false;
   var idleTickerFn = function() {
     waverTime += gsap.ticker.deltaRatio() / 60;
-    if (!scrollActive) {
+    if (sectionInView && !scrollActive) {
       polaroids.forEach(function(el, i) {
         gsap.set(el, { rotation: waverRot(i) });
       });
@@ -1635,13 +1678,19 @@ function initPolaroidCarousel() {
   containerTickerFns.push(idleTickerFn);
 
   ScrollTrigger.create({
+    trigger: section,
+    start: 'top bottom', end: 'bottom top',
+    onToggle: function(self) { sectionInView = self.isActive; }
+  });
+
+  ScrollTrigger.create({
     trigger: section, pin: true, start: 'top top',
     end: '+=' + (window.innerHeight * cc.scrollMultiplier), scrub: cc.scrub,
     onEnter: function() { scrollActive = true; },
     onLeaveBack: function() { scrollActive = false; },
     onUpdate: function(self) {
       updateCarousel(self.progress * progressScale);
-      progressBar.style.width = (self.progress * 100) + '%';
+      progressBar.style.transform = 'scaleX(' + self.progress + ')';
     }
   });
 

@@ -17,6 +17,6 @@
   position: absolute;
   top: 0;
   left: 0;
-  will-change: transform, opacity;
+  will-change: transform;
   transform-origin: center center;
 }
