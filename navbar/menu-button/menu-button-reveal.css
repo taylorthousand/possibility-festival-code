@@ -22,3 +22,13 @@
   pointer-events: auto !important;
   transform: none !important;
 }
+
+/* Mobile pre-hide — preloader is skipped on mobile, so the button would
+   flash visible until createMenuButtonRevealST's fromTo fires. CSS
+   pre-hide matches GSAP's yPercent: 110 target state. Designer override
+   above already covers the wf-design-mode / w-editor case. */
+@media (max-width: 767px) {
+  .desktop_menu-button {
+    transform: translate(0, 110%);
+  }
+}

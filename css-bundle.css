@@ -241,6 +241,15 @@ html {
   top: 0px !important;
 }
 
+/* Drop box-shadow on mobile carousel cards. iOS Safari at DPR 3
+   re-rasterizes soft shadows on transformed elements every frame. */
+@media (max-width: 767px) {
+  [data-carousel="polaroid"] .polaroid.vertical.is-carousel,
+  [data-carousel="polaroid"] .polaroid.vertical.is-carousel > * {
+    box-shadow: none !important;
+  }
+}
+
 
 /* -------------------------------------------
    NAV LINK SKEW — faux-italic hover on menu links
@@ -252,6 +261,43 @@ html {
 
 .menu-linkblock:hover {
   font-variation-settings: 'slnt' -12;
+}
+
+
+/* -------------------------------------------
+   PRELOADER — mobile hide
+   Bundle loads at end of <body>, so the IIFE that hides [data-load-wrap]
+   fires AFTER first paint. CSS in the head applies before first paint,
+   eliminating the brief flash of dark bg + grayscale logo on mobile.
+   JS-based hide (barba-bundle.js:38 IIFE and runPageOnceAnimation mobile
+   branch) remains as belt-and-suspenders for runtime state.
+   ------------------------------------------- */
+
+@media (max-width: 767px) {
+  [data-load-wrap] {
+    display: none !important;
+  }
+}
+
+
+/* -------------------------------------------
+   MENU BUTTON — mobile pre-hide
+   Desktop: preloader wrap covers the button during JS setup.
+   Mobile: preloader is skipped, so the button would flash visible
+   until createMenuButtonRevealST's fromTo fires. Pre-hide via CSS
+   matches GSAP's yPercent: 110 target state — no visible jump when
+   GSAP takes over.
+   ------------------------------------------- */
+
+@media (max-width: 767px) {
+  .desktop_menu-button {
+    transform: translate(0, 110%);
+  }
+
+  .wf-design-mode .desktop_menu-button,
+  .w-editor .desktop_menu-button {
+    transform: none !important;
+  }
 }
 
 
