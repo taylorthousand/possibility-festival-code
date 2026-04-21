@@ -302,14 +302,19 @@ html {
 
 
 /* -------------------------------------------
-   FESTIVALS LIST — hover (≥768px) + scroll-activate (≤767px)
-   Register page festivals list. Tablet + desktop use :hover
-   on the list to dim all headings and highlight the one
-   being hovered. Mobile uses JS-toggled classes driven by
-   a virtual 45vh activation line (see festival-hover.js):
+   FESTIVALS LIST — hover (hover-capable) + scroll-activate (no-hover)
+   Register page festivals list. Hover-capable devices (mouse /
+   trackpad) use :hover on the list to dim all headings and
+   highlight the one being hovered. No-hover devices (touch)
+   use JS-toggled classes driven by a virtual 45vh activation
+   line (see festival-hover.js):
      .festivals_list.is-list-active         — line is inside the list
      .festivals_item-link.is-active         — line is inside this item
      [data-festival].is-active              — the matching polaroid
+   Split on (hover: hover) / (hover: none), not viewport width —
+   viewport is a proxy, hover capability is the real signal.
+   Keeps :hover off touch devices that would otherwise require a
+   double-tap to activate the link.
    ------------------------------------------- */
 
 .heading-style-h4-56.is-festivals {
@@ -320,7 +325,7 @@ html {
   transition: background-color 0.3s ease;
 }
 
-@media only screen and (min-width: 768px) {
+@media (hover: hover) {
   .festivals_list:hover .heading-style-h4-56.is-festivals {
     color: #c4c4c4;
   }
@@ -336,8 +341,8 @@ html {
 /* !important on polaroid display/opacity/transform to override inline styles
    Webflow mouse interactions write on mousemove (inline without !important
    loses to CSS with !important). JS also strips inline display/opacity/
-   transform from each polaroid on mobile init as first-line defense. */
-@media only screen and (max-width: 767px) {
+   transform from each polaroid on no-hover init as first-line defense. */
+@media (hover: none) {
   [data-festival]:not(.festivals_item-link) {
     display: flex !important;
     opacity: 0 !important;

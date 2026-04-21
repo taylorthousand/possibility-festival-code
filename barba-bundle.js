@@ -1251,14 +1251,19 @@ function initDonationHeaderScroll() {
 }
 
 // CONTAINER: FESTIVAL HOVER / SCROLL ACTIVATE
-// ≥768px: existing hover + dynamic shadow ticker.
-// ≤767px: scroll-driven activation — no hover listeners, no ticker.
+// Hover-capable devices: existing hover + dynamic shadow ticker.
+// No-hover devices: scroll-driven activation — no hover listeners, no ticker.
 //   A virtual activation line at 45vh toggles .is-active on whichever
 //   link block it intersects, plus .is-list-active on the list while
 //   any item is in range. Visual state lives in festivals-list-hover.css.
+// Branch via (hover: hover) media feature — viewport width is a proxy, not
+// the real signal. Touch iPad in landscape is >=768px but has no hover, and
+// the hover branch on touch forces a first-tap-hover / second-tap-click
+// double-click requirement on the link.
 
 function initFestivalHover() {
-  if (window.innerWidth >= 768) {
+  var canHover = window.matchMedia('(hover: hover)').matches;
+  if (canHover) {
     initFestivalHoverDesktop();
   } else {
     initFestivalScrollActivateMobile();

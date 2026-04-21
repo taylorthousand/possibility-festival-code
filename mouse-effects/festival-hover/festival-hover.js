@@ -2,7 +2,7 @@
    FESTIVAL HOVER / SCROLL ACTIVATE
    ===========================================
 
-   ≥768px (tablet + desktop):
+   Hover-capable devices (mouse / trackpad):
    - Hovering a .festivals_item-link skews the
      heading text to create a faux-italic effect.
    - Polaroid images get a dynamic box-shadow that
@@ -10,10 +10,12 @@
      Webflow interaction). Shadow shifts opposite
      to rotation for a realistic depth effect.
 
-   ≤767px (mobile landscape + portrait):
+   No-hover devices (touch phones / tablets):
    - No hover listeners and no shadow ticker (touch
-     devices can fire synthetic mouse events that
-     would fight the scroll system).
+     devices fire synthetic mouse events that would
+     both fight the scroll system and force a double-
+     tap to activate links whose :hover CSS restyles
+     the link).
    - Instead: a virtual activation line at 45% of
      the viewport height. As the user scrolls, the
      item whose link block intersects that line
@@ -21,6 +23,12 @@
      scale), its register tag turns blue, and its
      heading un-dims + italicizes. Non-active items
      are dimmed while the list is in range.
+
+   Branch via (hover: hover) media feature, not
+   viewport width — an iPad in landscape is >=768px
+   but has no hover, and the hover branch on touch
+   causes a first-tap-hover / second-tap-click
+   double-click requirement.
 
    SETUP IN WEBFLOW:
    - Each .festivals_item-link gets data-festival attribute
@@ -173,7 +181,8 @@
   }
 
   function initFestivalHover() {
-    if (window.innerWidth >= 768) {
+    var canHover = window.matchMedia('(hover: hover)').matches;
+    if (canHover) {
       initFestivalHoverDesktop();
     } else {
       initFestivalScrollActivateMobile();

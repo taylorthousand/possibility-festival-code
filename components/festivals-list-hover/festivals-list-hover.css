@@ -12,14 +12,19 @@
    Polaroids live elsewhere in the DOM but share the
    data-festival attribute to pair with each link.
 
-   ≥768px (tablet + desktop): hover-driven — list hover
-   dims all headings; hovered item restores + italicizes
-   + turns register tag blue.
+   Hover-capable devices (mouse / trackpad): hover-driven —
+   list hover dims all headings; hovered item restores +
+   italicizes + turns register tag blue.
 
-   ≤767px (mobile landscape + portrait): scroll-driven —
+   No-hover devices (touch phones / tablets): scroll-driven —
    JS toggles .is-list-active on the list and .is-active
    on the link/polaroid as a virtual 45vh line crosses
    each item. Same visual result as hover.
+
+   Split on (hover: hover) / (hover: none) — not viewport
+   width. An iPad in landscape is >=768px but has no hover,
+   and the hover branch on touch triggers a double-tap
+   requirement to activate the link.
    =========================================== */
 
 /* Shared transitions (all viewports) */
@@ -32,8 +37,8 @@
 }
 
 
-/* --- Tablet + Desktop: hover-driven (≥768px) --- */
-@media only screen and (min-width: 768px) {
+/* --- Hover-capable devices: hover-driven --- */
+@media (hover: hover) {
 
   /* List hovered: dim everything */
   .festivals_list:hover .heading-style-h4-56.is-festivals {
@@ -53,10 +58,10 @@
 }
 
 
-/* --- Mobile: scroll-driven (≤767px) --- */
+/* --- No-hover devices: scroll-driven --- */
 /* !important on polaroid state to override any inline styles Webflow
    interactions may bake in at page load (display:none, opacity:0). */
-@media only screen and (max-width: 767px) {
+@media (hover: none) {
 
   /* Polaroid base state — hidden, ready to reveal.
      display:flex !important overrides any inline display:none that a
