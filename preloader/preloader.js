@@ -62,6 +62,13 @@ function runPreloader() {
     return;
   }
 
+  // Mobile — skip preloader. The timeline competes with first-load script parsing
+  // and font loading on the main thread, producing visible jank.
+  if (window.innerWidth < 768) {
+    wrap.style.setProperty('display', 'none', 'important');
+    return;
+  }
+
   // Reduced motion — skip all animation
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reducedMotion) {

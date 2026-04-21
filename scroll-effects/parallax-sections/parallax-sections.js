@@ -24,6 +24,7 @@ const parallaxConfig = {
 };
 
 function initParallaxSections() {
+  if (window.innerWidth < 768) return;
   // Sections that sink down as you scroll past
   document.querySelectorAll('[data-parallax="out"]').forEach(section => {
     gsap.to(section, {

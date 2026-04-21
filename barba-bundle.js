@@ -34,10 +34,13 @@ var has = function(s) { return !!nextPage.querySelector(s); };
 var staggerDefault = 0.05;
 var durationDefault = 0.6;
 
-// Immediately hide preloader if already seen this session
+// Immediately hide preloader if already seen this session, or on mobile (skipped entirely).
+// Pre-hiding avoids a brief flash of the loader wrap before runPageOnceAnimation fires.
 (function() {
   var w = document.querySelector('[data-load-wrap]');
-  if (w && sessionStorage.getItem('pfest-preloader-seen')) w.style.display = 'none';
+  if (w && (sessionStorage.getItem('pfest-preloader-seen') || window.innerWidth < 768)) {
+    w.style.display = 'none';
+  }
 })();
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
@@ -136,10 +139,22 @@ function runPageOnceAnimation(next) {
   document.documentElement.style.overflowY = 'scroll';
 
   var wrap = document.querySelector('[data-load-wrap]');
+  var isMobile = window.innerWidth < 768;
 
-  // No loader element or already seen this session — skip
-  if (!wrap || sessionStorage.getItem(preloaderCfg.sessionKey)) {
+  // No loader element, already seen this session, or mobile — skip preloader entirely.
+  // Mobile is skipped because the ~3.5s timeline competes for the main thread during the
+  // same window the browser is parsing GSAP/Barba/Lenis/Vimeo and loading fonts.
+  if (!wrap || sessionStorage.getItem(preloaderCfg.sessionKey) || isMobile) {
     if (wrap) wrap.style.display = 'none';
+    if (isMobile) {
+      // Load headings are hidden via CSS and normally revealed inside the preloader
+      // timeline's SplitText onSplit callback. Reveal them directly and set the flag
+      // so doTextReveal's existing bail-out path handles them without re-splitting.
+      next.querySelectorAll('[data-split-trigger="load"]').forEach(function(el) {
+        gsap.set(el, { autoAlpha: 1 });
+      });
+      loadRevealFired = true;
+    }
     resetPage(next);
     var tw = document.querySelector("[data-transition-wrap]");
     if (tw) tw.style.display = "none";
@@ -1475,6 +1490,7 @@ var parallaxCfg = {
 };
 
 function initParallaxSections() {
+  if (window.innerWidth < 768) return;
   nextPage.querySelectorAll('[data-parallax="out"]').forEach(function(section) {
     gsap.to(section, {
       y: parallaxCfg.out.y, ease: 'none',
