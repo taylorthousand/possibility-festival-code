@@ -36,11 +36,23 @@ var durationDefault = 0.6;
 
 // Immediately hide preloader if already seen this session, or on mobile (skipped entirely).
 // Pre-hiding avoids a brief flash of the loader wrap before runPageOnceAnimation fires.
+// Also installs a 6s failsafe watchdog for desktop: if the normal timeline never hides
+// the wrap (bundle crash, hung CDN, script blocked by a filter), force-hide it so the
+// site remains usable. Belt-and-suspenders with the CSS @keyframes in css-bundle.css
+// and the inline <script> in the Webflow <head>.
 (function() {
   var w = document.querySelector('[data-load-wrap]');
-  if (w && (sessionStorage.getItem('pfest-preloader-seen') || window.innerWidth < 768)) {
+  if (!w) return;
+  if (sessionStorage.getItem('pfest-preloader-seen') || window.innerWidth < 768) {
     w.style.display = 'none';
+    return;
   }
+  setTimeout(function() {
+    if (w.style.display !== 'none') {
+      console.warn('[pfest] preloader failsafe fired — wrap still visible at 6s');
+      w.style.display = 'none';
+    }
+  }, 6000);
 })();
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");

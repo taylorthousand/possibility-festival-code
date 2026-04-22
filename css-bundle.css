@@ -280,6 +280,24 @@ html {
 
 
 /* -------------------------------------------
+   PRELOADER — failsafe auto-hide at 6s
+   If the JS bundle crashes or the GSAP timeline hangs before setting
+   display:none, this animation fades the wrap out so the site stays
+   usable. display isn't animatable — using opacity + visibility +
+   pointer-events. Inline display:none from GSAP still hides normally.
+   ------------------------------------------- */
+
+@keyframes pfest-loader-failsafe {
+  0%, 99% { opacity: 1; visibility: visible; pointer-events: auto; }
+  100%    { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+[data-load-wrap] {
+  animation: pfest-loader-failsafe 6s linear forwards;
+}
+
+
+/* -------------------------------------------
    MENU BUTTON — mobile pre-hide
    Desktop: preloader wrap covers the button during JS setup.
    Mobile: preloader is skipped, so the button would flash visible

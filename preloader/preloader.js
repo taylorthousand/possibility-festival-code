@@ -50,11 +50,24 @@ var preloaderCfg = {
 };
 
 function runPreloader() {
-  gsap.registerPlugin(CustomEase, SplitText, DrawSVGPlugin);
-  CustomEase.create('loader', preloaderCfg.loaderEase);
-
   var wrap = document.querySelector('[data-load-wrap]');
   if (!wrap) return;
+
+  // Failsafe watchdog — installed BEFORE GSAP/CustomEase calls so even if
+  // plugin registration throws, the wrap still dismisses at 6s. Belt-and-
+  // suspenders with the CSS @keyframes in css-bundle.css and the inline
+  // <script> in the Webflow <head>.
+  if (!sessionStorage.getItem(preloaderCfg.sessionKey) && window.innerWidth >= 768) {
+    setTimeout(function() {
+      if (wrap.style.display !== 'none') {
+        console.warn('[pfest] preloader failsafe fired — wrap still visible at 6s');
+        wrap.style.setProperty('display', 'none', 'important');
+      }
+    }, 6000);
+  }
+
+  gsap.registerPlugin(CustomEase, SplitText, DrawSVGPlugin);
+  CustomEase.create('loader', preloaderCfg.loaderEase);
 
   // Session gate — skip if already seen this session
   if (sessionStorage.getItem(preloaderCfg.sessionKey)) {
