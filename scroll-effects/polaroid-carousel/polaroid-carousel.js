@@ -92,7 +92,12 @@
     orbitOffsetY: 2,
   };
   var mobileOverrides = {
-    // Properties that differ at mobile (< 768px) — fill in after visual testing
+    radiusX: 38,
+    radiusY: 14,
+    scaleMax: 0.6,
+    scaleMin: 0.45,
+    orbitOffsetY: 1,
+    scrub: true,
   };
   if (window.innerWidth < 992) Object.assign(config, tabletOverrides);
   if (window.innerWidth < 768) Object.assign(config, mobileOverrides);
@@ -276,7 +281,7 @@
   /* ---------- INIT ---------- */
 
   function init() {
-    if (window.innerWidth < 768) return; // DIAGNOSTIC: isolating mobile scroll jank
+    if (window.innerWidth < 768) return; // Mobile: cards hidden via CSS, no JS work
 
     // Drop per-frame filter: brightness() on devices where rasterization is the
     // bottleneck — tablets (modest GPU vs pixel count), Chromebooks, <=4 cores,

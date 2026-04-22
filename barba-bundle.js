@@ -104,6 +104,8 @@ function initAfterEnterFunctions(next) {
   if (has('.steps_conclusion_text_mobile')) initTextColorRevealMobile();
   if (has('[data-underline]')) initUnderlineDraw();
   if (has('[data-modal]')) initModal();
+  if (has('[data-vimeo-player-init]')) initVimeoPlayer();
+  if (has('[data-fillout-id]')) initFilloutEmbed();
 
   // Refresh wrapper ScrollTriggers (killed during afterLeave, not yet created on first load)
   refreshMenuButtonReveal();
@@ -841,6 +843,7 @@ function initTextReveal() {
 // CONTAINER: HANGTAG HOVER
 
 function initHangtagHover() {
+  if (window.innerWidth < 992) return;
   var FOLLOW = 0.1, OFFSET_Y_REM = 0.5;
   var REST_ANGLE = 10, ANGLE_FRICTION = 0.7, ANGLE_VEL_INFLUENCE = 0.03;
   var ANGLE_DRIFT_BACK = 0.06, ANGLE_MIN = -5, ANGLE_MAX = 20;
@@ -1513,7 +1516,7 @@ function initParallaxSections() {
 // CONTAINER: POLAROID CAROUSEL
 
 function initPolaroidCarousel() {
-  if (window.innerWidth < 768) return; // DIAGNOSTIC: isolating mobile scroll jank
+  if (window.innerWidth < 768) return; // Mobile: cards hidden via CSS, no JS work
 
   // Drop per-frame filter: brightness() on devices where rasterization is the
   // bottleneck — tablets, Chromebooks, <=4 cores, prefers-reduced-motion,
@@ -1547,7 +1550,14 @@ function initPolaroidCarousel() {
     radiusY: inverseScale(21, 26, 992, 768),
     orbitOffsetY: 2,
   };
-  var mobileOverrides = {};
+  var mobileOverrides = {
+    radiusX: 38,
+    radiusY: 14,
+    scaleMax: 0.6,
+    scaleMin: 0.45,
+    orbitOffsetY: 1,
+    scrub: true,
+  };
   if (window.innerWidth < 992) Object.assign(cc, tabletOverrides);
   if (window.innerWidth < 768) Object.assign(cc, mobileOverrides);
 
@@ -2080,4 +2090,161 @@ function initModal() {
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
   }, { signal: signal });
+}
+
+// CONTAINER: VIMEO PLAYER
+
+function initVimeoPlayer() {
+  var players = nextPage.querySelectorAll('[data-vimeo-player-init]');
+  if (!players.length) return;
+
+  var signal = containerAbort.signal;
+
+  players.forEach(function(vimeoElement, index) {
+    var vimeoVideoID = vimeoElement.getAttribute('data-vimeo-video-id');
+    if (!vimeoVideoID) return;
+
+    var vimeoVideoHash = vimeoElement.getAttribute('data-vimeo-video-hash');
+    var hashParam = vimeoVideoHash ? '&h=' + vimeoVideoHash : '';
+
+    // Auto-fetch thumbnail from Vimeo oEmbed (skipped if src is already set)
+    var placeholder = vimeoElement.querySelector('.vimeo-player__placeholder');
+    if (placeholder && !placeholder.getAttribute('src')) {
+      var vimeoPageURL = 'https://vimeo.com/' + vimeoVideoID + (vimeoVideoHash ? '/' + vimeoVideoHash : '');
+      var oembedURL = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(vimeoPageURL) + '&width=1280';
+      fetch(oembedURL, { signal: signal })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (data && data.thumbnail_url) placeholder.src = data.thumbnail_url;
+        })
+        .catch(function() {});
+    }
+
+    var vimeoVideoURL = 'https://player.vimeo.com/video/' + vimeoVideoID + '?api=1&background=1&autoplay=0&loop=0&muted=1' + hashParam;
+    var iframe = vimeoElement.querySelector('iframe');
+    if (iframe) iframe.setAttribute('src', vimeoVideoURL);
+
+    var videoIndexID = 'vimeo-player-index-' + index;
+    vimeoElement.setAttribute('id', videoIndexID);
+
+    var player = new Vimeo.Player(videoIndexID);
+
+    // Cover-fit iframe — scale to fill box, cropping edges as needed
+    if (vimeoElement.getAttribute('data-vimeo-update-size') === 'true') {
+      var videoAspectRatio;
+
+      function adjustVideoSizing() {
+        if (!videoAspectRatio) return;
+        var iframeEl = vimeoElement.querySelector('.vimeo-player__iframe');
+        if (!iframeEl) return;
+        var containerW = vimeoElement.offsetWidth;
+        var containerH = vimeoElement.offsetHeight;
+        if (!containerW || !containerH) return;
+        var containerRatio = containerH / containerW;
+        if (containerRatio > videoAspectRatio) {
+          iframeEl.style.width = (containerRatio / videoAspectRatio * 100) + '%';
+          iframeEl.style.height = '100%';
+        } else {
+          iframeEl.style.width = '100%';
+          iframeEl.style.height = (videoAspectRatio / containerRatio * 100) + '%';
+        }
+      }
+
+      player.getVideoWidth().then(function(width) {
+        player.getVideoHeight().then(function(height) {
+          videoAspectRatio = height / width;
+          adjustVideoSizing();
+        });
+      });
+
+      window.addEventListener('resize', adjustVideoSizing, { signal: signal });
+    }
+
+    player.on('play', function() {
+      vimeoElement.setAttribute('data-vimeo-loaded', 'true');
+      vimeoElement.setAttribute('data-vimeo-playing', 'true');
+    });
+
+    player.on('pause', function() {
+      vimeoElement.setAttribute('data-vimeo-playing', 'false');
+    });
+
+    function vimeoPlayerPlay() {
+      vimeoElement.setAttribute('data-vimeo-activated', 'true');
+      vimeoElement.setAttribute('data-vimeo-playing', 'true');
+      player.play();
+    }
+
+    function vimeoPlayerPause() {
+      player.pause();
+    }
+
+    // Click: Play
+    var playBtn = vimeoElement.querySelector('[data-vimeo-control="play"]');
+    if (playBtn) {
+      playBtn.addEventListener('click', function() {
+        player.setVolume(0);
+        vimeoPlayerPlay();
+        if (vimeoElement.getAttribute('data-vimeo-muted') !== 'true') {
+          player.setVolume(1);
+        }
+      }, { signal: signal });
+    }
+
+    // Click: Pause
+    var pauseBtn = vimeoElement.querySelector('[data-vimeo-control="pause"]');
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', vimeoPlayerPause, { signal: signal });
+    }
+
+    // Click: Mute toggle
+    var muteBtn = vimeoElement.querySelector('[data-vimeo-control="mute"]');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', function() {
+        if (vimeoElement.getAttribute('data-vimeo-muted') === 'false') {
+          player.setVolume(0);
+          vimeoElement.setAttribute('data-vimeo-muted', 'true');
+        } else {
+          player.setVolume(1);
+          vimeoElement.setAttribute('data-vimeo-muted', 'false');
+        }
+      }, { signal: signal });
+    }
+
+    // End → reset to placeholder
+    player.on('ended', function() {
+      vimeoElement.setAttribute('data-vimeo-activated', 'false');
+      vimeoElement.setAttribute('data-vimeo-playing', 'false');
+      player.unload();
+    });
+  });
+}
+
+// CONTAINER: FILLOUT EMBED
+// The Fillout script (server.fillout.com/embed/v1/) scans for [data-fillout-id]
+// divs when it executes. On direct page load it runs natively; on a Barba swap
+// the <script> tag arrives in the new container but the browser does NOT
+// re-execute it (innerHTML insertion rule). Clone the script element into a
+// fresh node so the browser re-evaluates it.
+//
+// Fillout also guards re-entry with window.__fillout*Initialized flags — if we
+// don't clear them, the re-executed script sees "already initialized" and
+// early-returns without scanning the new div. Reset all four embed-type flags
+// so the rescan covers whichever embed type the page uses.
+
+function initFilloutEmbed() {
+  var scripts = nextPage.querySelectorAll('script[src*="fillout.com"]');
+  if (!scripts.length) return;
+  window.__filloutStandardInitialized = false;
+  window.__filloutPopupEmbedsInitialized = false;
+  window.__filloutSlidersInitialized = false;
+  window.__filloutFullScreenInitialized = false;
+  scripts.forEach(function(oldScript) {
+    var newScript = document.createElement('script');
+    for (var i = 0; i < oldScript.attributes.length; i++) {
+      var a = oldScript.attributes[i];
+      newScript.setAttribute(a.name, a.value);
+    }
+    oldScript.parentNode.replaceChild(newScript, oldScript);
+  });
 }

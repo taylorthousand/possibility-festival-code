@@ -193,6 +193,7 @@
   }
 
   function init() {
+    if (window.innerWidth < 992) return;
     document.querySelectorAll(".problem_study-hangtag").forEach(setupTag);
 
     // Track mouse position globally

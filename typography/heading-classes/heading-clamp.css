@@ -98,6 +98,6 @@ h6,
   }
 
   .is-steps-heading {
-    font-size: clamp(58px, 18vw, 78px);
+    font-size: clamp(58px, 16vw, 78px);
   }
 }
