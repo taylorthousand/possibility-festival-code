@@ -407,6 +407,31 @@ html {
 
 
 /* -------------------------------------------
+   MODAL — attribute-driven show/hide
+   ------------------------------------------- */
+
+[data-modal] {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+[data-modal="active"] {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+/* -------------------------------------------
+   NEWSLETTER FORM — mobile step visibility
+   ------------------------------------------- */
+
+[data-newsletter-step][hidden] {
+  display: none !important;
+}
+
+
+/* -------------------------------------------
    VIMEO PLAYER — minimal custom player
    Click-to-play, click-to-pause, mute toggle (bottom-right).
    Vimeo's native chrome stripped via ?background=1 URL param.
