@@ -73,7 +73,7 @@ function initNewsletterForm() {
       }, { signal: signal });
     });
 
-    nextPage.querySelectorAll('[data-modal-open="newsletter"]').forEach(function(btn) {
+    document.querySelectorAll('[data-modal-open="newsletter"]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         showStep(1);
       }, { signal: signal });

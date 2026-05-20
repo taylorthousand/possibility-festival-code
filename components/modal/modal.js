@@ -27,7 +27,7 @@ function initModal() {
   }
 
   // Open
-  nextPage.querySelectorAll('[data-modal-open]').forEach(function(btn) {
+  document.querySelectorAll('[data-modal-open]').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       var target = btn.getAttribute('data-modal-open');
       var modal = getModalByTarget(target);

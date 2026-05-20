@@ -2097,7 +2097,7 @@ function initModal() {
   }
 
   // Open
-  nextPage.querySelectorAll('[data-modal-open]').forEach(function(btn) {
+  document.querySelectorAll('[data-modal-open]').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       var target = btn.getAttribute('data-modal-open');
       var modal = getModalByTarget(target);
@@ -2211,7 +2211,7 @@ function initNewsletterForm() {
       }, { signal: signal });
     });
 
-    nextPage.querySelectorAll('[data-modal-open="newsletter"]').forEach(function(btn) {
+    document.querySelectorAll('[data-modal-open="newsletter"]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         showStep(1);
       }, { signal: signal });
