@@ -1,12 +1,14 @@
 // CONTAINER: NEWSLETTER FORM
 
 function initNewsletterForm() {
-  var mobileForms = nextPage.querySelectorAll('[data-newsletter-form="mobile"]');
-  if (!mobileForms.length) return;
+  var forms = nextPage.querySelectorAll('[data-newsletter-form]');
+  if (!forms.length) return;
 
   var signal = containerAbort.signal;
 
-  mobileForms.forEach(function(form) {
+  forms.forEach(function(form) {
+    var scope = form.closest('[data-modal-id="newsletter"], [data-modal]') || form;
+    var headings = Array.prototype.slice.call(scope.querySelectorAll('[data-newsletter-heading-step]'));
     var steps = Array.prototype.slice.call(form.querySelectorAll('[data-newsletter-step]'));
     var nextBtns = form.querySelectorAll('[data-newsletter-next]');
     var prevBtns = form.querySelectorAll('[data-newsletter-prev]');
@@ -25,6 +27,13 @@ function initNewsletterForm() {
         step.hidden = !isActive;
         step.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         step.setAttribute('data-newsletter-step-state', isActive ? 'active' : 'not-active');
+      });
+
+      headings.forEach(function(heading) {
+        var isActive = heading.getAttribute('data-newsletter-heading-step') === String(stepNumber);
+        heading.hidden = !isActive;
+        heading.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        heading.setAttribute('data-newsletter-heading-step-state', isActive ? 'active' : 'not-active');
       });
 
       form.setAttribute('data-newsletter-current-step', String(stepNumber));

@@ -426,7 +426,8 @@ html {
    NEWSLETTER FORM — mobile step visibility
    ------------------------------------------- */
 
-[data-newsletter-step][hidden] {
+[data-newsletter-step][hidden],
+[data-newsletter-heading-step][hidden] {
   display: none !important;
 }
 
